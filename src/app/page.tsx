@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [prompt, setPrompt] = useState("");
+  const [query, setQuery] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -11,10 +11,10 @@ export default function Home() {
     setLoading(true);
     setResult("");
 
-    const res = await fetch("/api/generate", {
+    const res = await fetch("/api/get-products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ query }),
     });
 
     const data = await res.json();
@@ -26,8 +26,8 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <h1 className="text-3xl font-bold mb-6">💡 My AI App</h1>
       <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         placeholder="Ask me something..."
         className="w-full max-w-lg p-4 border border-gray-300 rounded-md shadow-sm mb-4"
       />
@@ -38,11 +38,11 @@ export default function Home() {
       >
         {loading ? "Thinking..." : "Generate"}
       </button>
-      {result && (
+      {/* {result && (
         <div className="mt-6 w-full max-w-lg bg-white p-4 rounded-md shadow">
           <p>{result}</p>
         </div>
-      )}
+      )} */}
     </main>
   );
 }
