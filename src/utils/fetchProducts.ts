@@ -8,12 +8,14 @@ export type Product = {
 
 type FetchProductsResponse = {
   data?: {
-    productByCategory?: Product[];
+    products?: Product[];
   };
   [key: string]: any;
 };
 
-export async function fetchProducts(category: string = '', isServer : boolean = false): Promise<FetchProductsResponse> {
+const toGraphQlArg = (arg: string | null) => arg ? arg : "";
+
+export async function fetchProducts(category: string | null = null, color: string | null = null, offset: number = 0, limit: number = 12, isServer : boolean = false): Promise<FetchProductsResponse> {
   const url = isServer
     ? "http://localhost:3001/api/get-products"
     : "/api/get-products";
@@ -21,7 +23,7 @@ export async function fetchProducts(category: string = '', isServer : boolean = 
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      query: `{ productByCategory(category: "${category}") { id name category price } }`,
+      query: `{ products(category: "${toGraphQlArg(category)}", color: "${toGraphQlArg(color)}", offset: ${offset}, limit: ${limit}) { id name category price variants { id sku color size stock} } }`,
     }),
     cache: isServer ? "no-store" : undefined,
   });

@@ -1,19 +1,14 @@
-from flask import Flask, request, jsonify
-from schema import schema  # This is customized
+# app.py
+from flask import Flask
+from strawberry.flask.views import GraphQLView
+from schema import schema #This is custom
 
 app = Flask(__name__)
 
-@app.route("/graphql", methods=["POST"])
-def graphql():
-    data = request.get_json()
-    if not data or "query" not in data:
-        return jsonify({"error": "No query found"}), 400
-
-    result = schema.execute(
-        data["query"],
-        variable_values=data.get("variables")
-    )
-    return jsonify(result.to_dict())
+app.add_url_rule(
+    "/graphql",
+    view_func=GraphQLView.as_view("graphql_view", schema=schema, graphiql=True) # graphiql=True allows UI for GraphQL queries
+)
 
 if __name__ == "__main__":
-    app.run(debug=True) #Never use debugger true in production!
+    app.run(debug=True)

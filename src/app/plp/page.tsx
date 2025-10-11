@@ -4,8 +4,8 @@ import { fetchProducts } from "@/utils/fetchProducts";
 
 export default async function ProductPage() {
   const plpTitleText = "Products";
-  const data = await fetchProducts("", true);
-  const products = data?.data?.productByCategory || [];
+  const data = await fetchProducts(null, null, 0, 12, true);
+  const products = data?.data?.products || [];
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
