@@ -1,20 +1,26 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchProducts, Product } from "@/utils/fetchProducts";
 import ProductCard from "@/components/ProductCard";
 import Button from "@/components/Button";
+import { FilterParams } from "./page";
 
 type ProductListProps = {
   initialProducts: Product[];
+  initialFilters?: FilterParams;
 };
 
-export default function ProductList({ initialProducts }: ProductListProps) {
+export default function ProductList({ initialProducts, initialFilters }: ProductListProps) {
   const noProductsText = "No products found.";
   const loadingText = "Loading products...";
 
-  const [category, setCategory] = useState<string | null>(null);
-  const [color, setColor] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [category, setCategory] = useState<string | null>(initialFilters?.category || null);
+  const [color, setColor] = useState<string | null>(initialFilters?.color || null);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -46,29 +52,39 @@ export default function ProductList({ initialProducts }: ProductListProps) {
   }
 
   useEffect(() => {
-  const observer = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) {
-      loadMore();
+    const observer = new IntersectionObserver(([entry]) => {
+      if (products.length && entry.isIntersecting) {
+        loadMore();
+      }
+    });
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
     }
-  });
-  if (sentinelRef.current) {
-    observer.observe(sentinelRef.current);
-  }
-  return () => observer.disconnect();
-}, [products]);
+    return () => observer.disconnect();
+  }, [products]);
 
-  // Only fetch when category changes and it's not "All"
-  React.useEffect(() => {
+  const handleUrlOnFiltering = (category: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (category) {
+      params.set("category", category);
+    } else {
+      params.delete("category");
+    }
+    router.push(`/plp?${params.toString()}`);
+  }
+
+  useEffect(() => {
     if (!category && !color) {
       setProducts(initialProducts);
     } else {
       filterProducts(category, color);
     }
+    handleUrlOnFiltering(category)
   }, [category, color]);
 
   return (    
     <>
-      <div className="flex mb-6 divide-x divide-gray-200">
+      <div className="flex flex-col sm:flex-row mb-6 divide-x divide-gray-200">
         {categories.map((cat, index) => (
           <Button 
             key={cat}
@@ -78,9 +94,9 @@ export default function ProductList({ initialProducts }: ProductListProps) {
                 ? "font-semibold bg-gray-300 text-black hover:bg-gray-300 hover:text-black"
                 : "bg-gray-300 text-gray-700 hover:bg-gray-200 hover:text-gray-900 hover:font-medium"
               }
-              ${(index !== 0 && index !== categories.length - 1)  && "rounded-none"}
-              ${index === 0  && "rounded-r-none"}
-              ${index === categories.length - 1  && "rounded-l-none"}
+              ${(index !== 0 && index !== categories.length - 1)  && "sm:rounded-none"}
+              ${index === 0  && "sm:rounded-r-none"}
+              ${index === categories.length - 1  && "sm:rounded-l-none"}
             `}
           >
             {cat || "All"}
