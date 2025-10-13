@@ -2,17 +2,18 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, run the flask based server:
+
+```bash
+  cd src/app/api/backend
+  python3  python3 app.py
+```
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+It's possible some libraries need to be installed. The terminal will let you know.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
