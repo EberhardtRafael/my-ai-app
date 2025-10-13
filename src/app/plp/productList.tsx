@@ -6,6 +6,7 @@ import { fetchProducts, Product } from "@/utils/fetchProducts";
 import ProductCard from "@/components/ProductCard";
 import Button from "@/components/Button";
 import { FilterParams } from "./page";
+import { PLP_PAGINATION_LIMIT } from "@/utils/constans";
 
 type ProductListProps = {
   initialProducts: Product[];
@@ -24,7 +25,7 @@ export default function ProductList({ initialProducts, initialFilters }: Product
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const offsetRef = useRef(12);
+  const offsetRef = useRef(initialProducts.length);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   //Where do I take the info about all possible categories, sizes and colors in real life?
@@ -32,12 +33,13 @@ export default function ProductList({ initialProducts, initialFilters }: Product
   const colors: (string | null)[] = [null, "Red", "Blue", "Black", "White", "Green"];
   const sizes: string[] = ["S", "M", "L", "XL"];
 
-  async function filterProducts(selectedCategory: string | null, selectedColor: string | null): Promise<void> {
+  async function filterProducts(search: string | undefined = initialFilters?.search, selectedCategory: string | null, selectedColor: string | null): Promise<void> {
     setLoading(true);
     try {
-      const data = await fetchProducts(selectedCategory, selectedColor);
-      offsetRef.current = 12;
-      setProducts(data?.data?.products || []);
+      const data = await fetchProducts(search, selectedCategory, selectedColor);
+      const fetchedProducts = data?.data?.products || [];
+      offsetRef.current = fetchedProducts.length;
+      setProducts(fetchedProducts);
     } catch (err) {
       console.error(err);
       setProducts([]);
@@ -46,9 +48,10 @@ export default function ProductList({ initialProducts, initialFilters }: Product
   }
 
   const loadMore = async () => {
-    const data = await fetchProducts(category, color, offsetRef.current, 12);
-    setProducts(prev => [...prev, ...data?.data?.products || []]);
-    offsetRef.current += 12;
+    const data = await fetchProducts(initialFilters?.search, category, color, offsetRef.current, PLP_PAGINATION_LIMIT);
+    const fetchedProducts = data?.data?.products || [];
+    offsetRef.current += fetchedProducts.length;
+    setProducts(prev => [...prev, ...fetchedProducts]);
   }
 
   useEffect(() => {
@@ -74,10 +77,16 @@ export default function ProductList({ initialProducts, initialFilters }: Product
   }
 
   useEffect(() => {
-    if (!category && !color) {
+    const search = searchParams.get("search") || "";
+    filterProducts(search, category, color);
+  }, [searchParams.get("search")]);
+
+  useEffect(() => {
+    const search = searchParams.get("search") || "";
+    if (!search && !category && !color) {
       setProducts(initialProducts);
-    } else {
-      filterProducts(category, color);
+    } else {      
+      filterProducts(search, category, color);
     }
     handleUrlOnFiltering(category)
   }, [category, color]);

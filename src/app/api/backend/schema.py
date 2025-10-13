@@ -2,6 +2,7 @@
 import strawberry
 from typing import List
 from models import Product, Variant, session
+from sqlalchemy import or_
 
 @strawberry.type
 class VariantType:
@@ -18,18 +19,30 @@ class ProductType:
     category: str
     price: float
     variants: List[VariantType]
-
 @strawberry.type
 class Query:
     @strawberry.field
-    def products(self, category: str = None, color: str = None, offset: int = None, limit: int = None) -> List[ProductType]:
+    def products(self, searchTerm: str = None, category: str = None, color: str = None, offset: int = None, limit: int = None) -> List[ProductType]:
         
         query = session.query(Product)
+        if color or searchTerm:
+            query = query.join(Variant)
         if category:
             query = query.filter(Product.category == category)
         if color:
             # join the Variant table and filter by color
-            query = query.join(Product.variants).filter(Variant.color == color)
+            query = query.filter(Variant.color == color)
+        if searchTerm:
+            like_pattern = f"%{searchTerm}%"
+            query = query.filter(
+                or_(
+                    Product.name.ilike(like_pattern),
+                    Product.category.ilike(like_pattern),
+                    Variant.sku.ilike(like_pattern),
+                    Variant.color.ilike(like_pattern),
+                )
+            )
+        query = query.distinct().order_by(Product.id)
         if offset:
             query = query.offset(offset)
         if limit:
