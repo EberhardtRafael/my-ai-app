@@ -7,8 +7,8 @@ First, run the flask based server:
 ```bash
   cd src/app/api/backend
   python3  python3 app.py
-```
-Then, run the development server:
+``` 
+Then, run the development server from the root:
 
 ```bash
 npm run dev
