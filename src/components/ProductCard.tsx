@@ -13,6 +13,9 @@ type ProductCardProps = {
   name?: string;
   category?: string;
   price?: number | string;
+  brand?: string;
+  rating_avg?: number;
+  rating_count?: number;
   className?: string;
   userId?: string;
   initialIsFavorite?: boolean;
@@ -24,6 +27,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   name,
   category,
   price,
+  brand,
+  rating_avg,
+  rating_count,
   className = '',
   userId,
   initialIsFavorite = false,
@@ -87,8 +93,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex justify-between items-start">
         <Link href={`/pdp/${id}`} className="flex-1">
           <div>
+            {brand && <p className="text-xs text-gray-400 uppercase tracking-wide">{brand}</p>}
             <h2 className="font-semibold">{name}</h2>
-            <p className="text-gray-500">{category}</p>
+            <p className="text-gray-500 text-sm">{category}</p>
+            {rating_avg !== undefined && rating_avg > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-yellow-500">★</span>
+                <span className="text-sm font-medium">{rating_avg.toFixed(1)}</span>
+                {rating_count !== undefined && rating_count > 0 && (
+                  <span className="text-xs text-gray-400">({rating_count})</span>
+                )}
+              </div>
+            )}
             <p className="font-bold mt-2">${price}</p>
           </div>
         </Link>

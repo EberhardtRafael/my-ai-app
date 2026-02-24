@@ -18,6 +18,18 @@ class Product(Base):
     name = Column(String)
     category = Column(String)
     price = Column(Float)
+    
+    # Enhanced fields for ML and content-based filtering
+    description = Column(String, nullable=True)  # Full text description for NLP/TF-IDF
+    brand = Column(String, nullable=True)  # Brand for similarity matching
+    material = Column(String, nullable=True)  # Material type (cotton, leather, etc.)
+    tags = Column(String, nullable=True)  # Comma-separated tags for quick filtering
+    rating_avg = Column(Float, default=0.0)  # Average rating (0-5 stars)
+    rating_count = Column(Integer, default=0)  # Number of ratings for confidence
+    sales_count = Column(Integer, default=0)  # Total units sold for popularity
+    image_url = Column(String, nullable=True)  # Product image URL
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
     variants = relationship("Variant", back_populates="product", cascade="all, delete-orphan")
     #There's a relation of one product to many variants
 

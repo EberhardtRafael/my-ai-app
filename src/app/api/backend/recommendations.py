@@ -1,12 +1,14 @@
 """
 Machine Learning Product Recommendations
-Uses collaborative filtering with scikit-learn to suggest products
-based on user purchase patterns and current cart items.
+Combines collaborative filtering and content-based filtering:
+- Collaborative: Based on user purchase patterns (who bought what together)
+- Content-based: Based on product attributes (description, tags, material, brand)
 """
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sqlalchemy.orm import joinedload
 from models import Order, OrderItem, Product, Favorite, Session
 from typing import List, Dict
@@ -80,6 +82,159 @@ def calculate_item_similarity(user_item_matrix: pd.DataFrame) -> pd.DataFrame:
     )
     
     return similarity_df
+
+
+def build_content_similarity_matrix(product_ids: List[int] = None) -> pd.DataFrame:
+    """
+    Calculate content-based similarity using TF-IDF on product attributes.
+    Combines description, tags, material, and brand into feature vectors.
+    
+    Args:
+        product_ids: Optional list of product IDs to analyze. If None, analyzes all products.
+    
+    Returns:
+        DataFrame with product similarity scores based on content
+    """
+    db_session = Session()
+    try:
+        # Fetch products with their attributes
+        query = db_session.query(Product)
+        if product_ids:
+            query = query.filter(Product.id.in_(product_ids))
+        products = query.all()
+        
+        if not products:
+            return pd.DataFrame()
+        
+        # Build text corpus for each product
+        product_texts = []
+        product_ids_list = []
+        
+        for product in products:
+            # Combine all text features
+            text_parts = []
+            
+            if product.description:
+                text_parts.append(product.description)
+            if product.tags:
+                text_parts.append(product.tags.replace(',', ' '))
+            if product.material:
+                # Repeat material multiple times for higher weight
+                text_parts.append(f"{product.material} {product.material} {product.material}")
+            if product.brand:
+                # Repeat brand for higher weight
+                text_parts.append(f"{product.brand} {product.brand}")
+            if product.category:
+                # Category is very important
+                text_parts.append(f"{product.category} {product.category} {product.category}")
+            
+            combined_text = ' '.join(text_parts)
+            product_texts.append(combined_text)
+            product_ids_list.append(product.id)
+        
+        # Create TF-IDF vectors
+        vectorizer = TfidfVectorizer(
+            max_features=200,
+            stop_words='english',
+            ngram_range=(1, 2)  # Use both single words and pairs
+        )
+        
+        tfidf_matrix = vectorizer.fit_transform(product_texts)
+        
+        # Calculate cosine similarity
+        similarity_matrix = cosine_similarity(tfidf_matrix)
+        
+        # Convert to DataFrame
+        similarity_df = pd.DataFrame(
+            similarity_matrix,
+            index=product_ids_list,
+            columns=product_ids_list
+        )
+        
+        return similarity_df
+        
+    finally:
+        db_session.close()
+
+
+def get_hybrid_recommendations(
+    cart_product_ids: List[int],
+    collaborative_similarity: pd.DataFrame,
+    limit: int = 5,
+    exclude_product_ids: List[int] = None
+) -> List[Dict]:
+    """
+    Hybrid recommendation combining collaborative and content-based filtering.
+    
+    Args:
+        cart_product_ids: Products currently in cart
+        collaborative_similarity: Pre-calculated collaborative filtering similarity matrix
+        limit: Number of recommendations to return
+        exclude_product_ids: Products to exclude from results
+    
+    Returns:
+        List of recommended product IDs with hybrid scores
+    """
+    exclude_product_ids = exclude_product_ids or []
+    
+    # Get content-based similarity for cart products
+    content_similarity = build_content_similarity_matrix()
+    
+    recommendations_scores = {}
+    
+    # Weight factors (tune these for better results)
+    COLLABORATIVE_WEIGHT = 0.6
+    CONTENT_WEIGHT = 0.4
+    
+    for product_id in cart_product_ids:
+        # Collaborative filtering scores
+        if not collaborative_similarity.empty and product_id in collaborative_similarity.index:
+            cf_scores = collaborative_similarity[product_id]
+            
+            for similar_product_id, cf_score in cf_scores.items():
+                if similar_product_id == product_id or similar_product_id in exclude_product_ids:
+                    continue
+                
+                # Initialize score if not exists
+                if similar_product_id not in recommendations_scores:
+                    recommendations_scores[similar_product_id] = {'cf': 0.0, 'content': 0.0}
+                
+                recommendations_scores[similar_product_id]['cf'] += cf_score
+        
+        # Content-based filtering scores
+        if not content_similarity.empty and product_id in content_similarity.index:
+            content_scores = content_similarity[product_id]
+            
+            for similar_product_id, content_score in content_scores.items():
+                if similar_product_id == product_id or similar_product_id in exclude_product_ids:
+                    continue
+                
+                # Initialize score if not exists
+                if similar_product_id not in recommendations_scores:
+                    recommendations_scores[similar_product_id] = {'cf': 0.0, 'content': 0.0}
+                
+                recommendations_scores[similar_product_id]['content'] += content_score
+    
+    # Calculate hybrid scores
+    hybrid_scores = {}
+    for product_id, scores in recommendations_scores.items():
+        hybrid_score = (
+            scores['cf'] * COLLABORATIVE_WEIGHT +
+            scores['content'] * CONTENT_WEIGHT
+        )
+        hybrid_scores[product_id] = hybrid_score
+    
+    # Sort by hybrid score
+    sorted_recommendations = sorted(
+        hybrid_scores.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+    
+    return [
+        {'product_id': int(product_id), 'score': float(score)}
+        for product_id, score in sorted_recommendations[:limit]
+    ]
 
 
 def get_recommendations_for_items(
@@ -216,18 +371,19 @@ def get_cart_recommendations(user_id: int, limit: int = 5) -> List[Product]:
             print(f"[DEBUG] User {user_id} - Using fallback (empty matrix)")
             return get_fallback_recommendations(cart_product_ids, limit, db_session)
         
-        # Calculate item similarity matrix
+        # Calculate item similarity matrix (collaborative filtering)
         similarity_df = calculate_item_similarity(user_item_matrix)
         
-        # Get recommendations based on all context (cart + past orders + favorites)
-        recommendations = get_recommendations_for_items(
-            product_ids=context_product_ids,
-            similarity_df=similarity_df,
-            n_recommendations=limit * 2,  # Get extra to filter out unavailable
-            exclude_product_ids=exclude_product_ids  # Don't recommend items already in cart
+        # Use hybrid recommendations (collaborative + content-based)
+        print(f"[DEBUG] User {user_id} - Using hybrid recommendations (CF + content-based)")
+        recommendations = get_hybrid_recommendations(
+            cart_product_ids=cart_product_ids,
+            collaborative_similarity=similarity_df,
+            limit=limit * 2,  # Get extra to filter out unavailable
+            exclude_product_ids=exclude_product_ids
         )
         
-        print(f"[DEBUG] User {user_id} - Collaborative filtering found {len(recommendations)} recommendations")
+        print(f"[DEBUG] User {user_id} - Hybrid filtering found {len(recommendations)} recommendations")
         
         # If collaborative filtering found too few recommendations (less than limit),
         # blend with fallback recommendations to fill the gap

@@ -3,6 +3,15 @@ export type Product = {
   name?: string;
   category?: string;
   price?: number;
+  description?: string;
+  brand?: string;
+  material?: string;
+  tags?: string;
+  rating_avg?: number;
+  rating_count?: number;
+  sales_count?: number;
+  image_url?: string;
+  created_at?: string;
   [key: string]: any; // allows arbitrary new props
 };
 
@@ -28,7 +37,10 @@ export async function fetchProducts(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: `{ products(searchTerm: "${searchTerm}", category: "${toGraphQlArg(category)}", color: "${toGraphQlArg(color)}", offset: ${offset}, limit: ${limit}) { id name category price variants { id sku color size stock} } }`,
+      query: `{ products(searchTerm: "${searchTerm}", category: "${toGraphQlArg(category)}", color: "${toGraphQlArg(color)}", offset: ${offset}, limit: ${limit}) { 
+        id name category price description brand material tags rating_avg rating_count sales_count image_url created_at
+        variants { id sku color size stock } 
+      } }`,
     }),
     cache: isServer ? 'no-store' : undefined,
   });
