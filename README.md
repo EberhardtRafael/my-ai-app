@@ -13,6 +13,32 @@
 
 A sophisticated, full-stack e-commerce application demonstrating advanced machine learning, Bayesian statistics, and AI-powered features for personalized shopping experiences and intelligent development workflows.
 
+---
+
+## 📑 Table of Contents
+
+- [🌟 Project Overview](#-project-overview)
+- [🚀 Key Features](#-key-features)
+  - [🤖 Machine Learning & AI](#-machine-learning--ai)
+  - [📊 Advanced Analytics & Statistics](#-advanced-analytics--statistics)
+  - [🎨 Full-Featured E-Commerce](#-full-featured-e-commerce)
+  - [🧪 Testing & Quality Assurance](#-testing--quality-assurance)
+- [🏗️ Technical Architecture](#️-technical-architecture)
+- [🚀 Quick Start (60 Seconds!)](#-quick-start-60-seconds)
+  - [Option 1: Docker](#option-1-docker-recommended---one-command)
+  - [Option 2: Dev Script](#option-2-quick-development-script)
+  - [Option 3: Manual Setup](#option-3-manual-setup)
+- [🎯 Try These Features!](#-try-these-features)
+- [🐳 Docker Commands](#-docker-commands)
+- [🧪 Testing](#-testing)
+- [📚 Documentation](#-documentation)
+- [🧠 Machine Learning Algorithms Explained](#-machine-learning-algorithms-explained)
+- [🔬 Why This Project is Special](#-why-this-project-is-special)
+- [🎯 Use Cases & Applications](#-use-cases--applications)
+- [📈 Future Enhancements](#-future-enhancements)
+
+---
+
 ## 🌟 Project Overview
 
 This isn't just another e-commerce site—it's a showcase of cutting-edge technologies working together to create a truly intelligent shopping platform. Built with Next.js 15, Python Flask, GraphQL, and powered by multiple machine learning models and statistical algorithms, this project demonstrates production-ready implementations of personalized recommendations, quality-aware ranking systems, user review analytics, and AI-assisted development tools.
