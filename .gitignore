@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Testing coverage
+coverage/
+htmlcov/
+.coverage
+.pytest_cache/
+*.pyc
+__pycache__/
