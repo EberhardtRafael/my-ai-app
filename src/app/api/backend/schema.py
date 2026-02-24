@@ -246,6 +246,14 @@ class Query:
         # Uses collaborative filtering to suggest products based on purchase patterns
         from recommendations import get_cart_recommendations
         return get_cart_recommendations(user_id, limit)
+    
+    @strawberry.field
+    def personalized_recommendations(self, user_id: int, limit: int = 8) -> List[ProductType]:
+        # Get personalized "For You" recommendations for homepage
+        # Uses collaborative filtering based on user's browsing/purchase history
+        # Falls back to trending/popular products for new users
+        from recommendations import get_personalized_recommendations
+        return get_personalized_recommendations(user_id, limit)
 
 # Mutations - Write operations
 

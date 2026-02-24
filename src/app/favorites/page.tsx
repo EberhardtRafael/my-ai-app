@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import ProductGrid from '@/components/ProductGrid';
+import InfoMessage from '@/components/ui/InfoMessage';
 import { fetchFavorites } from '@/utils/fetchFavorites';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 
@@ -10,7 +11,11 @@ export default async function FavoritesPage() {
     return (
       <main className="min-h-screen bg-gray-50 p-6">
         <h1 className="text-3xl font-bold mb-6">My Favorites</h1>
-        <p className="text-gray-600">Please sign in to view your favorites.</p>
+        <InfoMessage
+          message="Please sign in to view your favorites."
+          linkText="Sign in here"
+          linkHref="/auth/signin"
+        />
       </main>
     );
   }

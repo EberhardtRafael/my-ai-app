@@ -322,3 +322,168 @@ def get_fallback_recommendations(cart_product_ids: List[int], limit: int, db_ses
     finally:
         if should_close:
             db_session.close()
+
+
+def get_personalized_recommendations(user_id: int, limit: int = 8) -> List[Product]:
+    """
+    Get personalized product recommendations for homepage "For You" section.
+    Uses collaborative filtering based on user's browsing/purchase history.
+    Falls back to trending/popular products for new users with no history.
+    
+    Strategy:
+    1. For users with order history: Use collaborative filtering based on past purchases
+    2. For users with favorites only: Recommend similar products to favorites
+    3. For new users: Show trending products (most ordered across all users)
+    
+    Args:
+        user_id: User ID to get recommendations for
+        limit: Maximum number of recommendations to return (default: 8 for homepage)
+    
+    Returns:
+        List of recommended Product objects
+    """
+    db_session = Session()
+    try:
+        # Get user's purchase history (completed orders)
+        past_orders = db_session.query(Order).filter(
+            Order.user_id == user_id,
+            Order.status != "cart"
+        ).all()
+        
+        # Collect all products user has purchased
+        purchased_product_ids = []
+        for order in past_orders:
+            purchased_product_ids.extend([item.product_id for item in order.items])
+        purchased_product_ids = list(set(purchased_product_ids))  # Remove duplicates
+        
+        # Get user's favorites
+        favorites = db_session.query(Favorite).filter(
+            Favorite.user_id == user_id,
+            Favorite.removed_at.is_(None)
+        ).all()
+        favorite_product_ids = [fav.product_id for fav in favorites]
+        
+        print(f"[DEBUG] Personalized - User {user_id} has {len(purchased_product_ids)} purchased products")
+        print(f"[DEBUG] Personalized - User {user_id} has {len(favorite_product_ids)} favorites")
+        
+        # Strategy 1: User has purchase history - use collaborative filtering
+        if purchased_product_ids:
+            print(f"[DEBUG] Personalized - Using collaborative filtering for user {user_id}")
+            
+            # Build user-item matrix
+            user_item_matrix = build_user_item_matrix()
+            
+            if not user_item_matrix.empty:
+                # Calculate item similarity
+                similarity_df = calculate_item_similarity(user_item_matrix)
+                
+                # Get recommendations based on purchase history
+                # Combine purchased products and favorites for better context
+                context_product_ids = list(set(purchased_product_ids + favorite_product_ids))
+                
+                recommendations = get_recommendations_for_items(
+                    product_ids=context_product_ids,
+                    similarity_df=similarity_df,
+                    n_recommendations=limit * 2,  # Get extra to filter
+                    exclude_product_ids=purchased_product_ids  # Don't recommend already purchased
+                )
+                
+                if recommendations:
+                    recommended_product_ids = [rec['product_id'] for rec in recommendations[:limit]]
+                    products = db_session.query(Product).options(
+                        joinedload(Product.variants)
+                    ).filter(
+                        Product.id.in_(recommended_product_ids)
+                    ).all()
+                    
+                    # Sort products to match recommendation order
+                    product_dict = {p.id: p for p in products}
+                    sorted_products = [product_dict[pid] for pid in recommended_product_ids if pid in product_dict]
+                    
+                    print(f"[DEBUG] Personalized - Returning {len(sorted_products)} CF recommendations")
+                    return sorted_products
+        
+        # Strategy 2: User has favorites but no purchases - recommend similar to favorites
+        if favorite_product_ids:
+            print(f"[DEBUG] Personalized - Using favorites-based recommendations for user {user_id}")
+            
+            # Get categories from favorite products
+            favorite_products = db_session.query(Product).filter(
+                Product.id.in_(favorite_product_ids)
+            ).all()
+            favorite_categories = list(set([p.category for p in favorite_products]))
+            
+            # Recommend popular products from same categories
+            recommendations = db_session.query(Product).options(
+                joinedload(Product.variants)
+            ).filter(
+                Product.category.in_(favorite_categories),
+                ~Product.id.in_(favorite_product_ids)  # Exclude favorites
+            ).limit(limit).all()
+            
+            print(f"[DEBUG] Personalized - Returning {len(recommendations)} category-based recommendations")
+            return recommendations
+        
+        # Strategy 3: New user with no history - show trending/popular products
+        print(f"[DEBUG] Personalized - Using trending products for new user {user_id}")
+        trending_products = get_trending_products(limit, db_session)
+        print(f"[DEBUG] Personalized - Returning {len(trending_products)} trending products")
+        return trending_products
+        
+    finally:
+        db_session.close()
+
+
+def get_trending_products(limit: int, db_session=None) -> List[Product]:
+    """
+    Get trending/popular products based on order frequency.
+    Used as fallback for new users or when personalization isn't possible.
+    
+    Args:
+        limit: Maximum number of products to return
+        db_session: Optional database session to reuse
+    
+    Returns:
+        List of Product objects sorted by popularity
+    """
+    should_close = False
+    if db_session is None:
+        db_session = Session()
+        should_close = True
+    
+    try:
+        # Get products ordered by total quantity sold (from completed orders)
+        from sqlalchemy import func
+        
+        popular_products = db_session.query(
+            Product,
+            func.sum(OrderItem.quantity).label('total_sold')
+        ).join(
+            OrderItem, Product.id == OrderItem.product_id
+        ).join(
+            Order, OrderItem.order_id == Order.id
+        ).filter(
+            Order.status != "cart"  # Only count completed orders
+        ).options(
+            joinedload(Product.variants)
+        ).group_by(Product.id).order_by(
+            func.sum(OrderItem.quantity).desc()
+        ).limit(limit).all()
+        
+        # Extract just the Product objects
+        products = [product for product, total_sold in popular_products]
+        
+        # If not enough popular products, fill with random products
+        if len(products) < limit:
+            existing_ids = [p.id for p in products]
+            additional = db_session.query(Product).options(
+                joinedload(Product.variants)
+            ).filter(
+                ~Product.id.in_(existing_ids) if existing_ids else True
+            ).limit(limit - len(products)).all()
+            products.extend(additional)
+        
+        return products
+    finally:
+        if should_close:
+            db_session.close()

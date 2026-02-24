@@ -7,7 +7,8 @@ export async function POST(req: Request) {
     const { query, variables } = await req.json();
 
     // Validate that this is a products or recommendations query
-    if (!query.includes('product') && !query.includes('Product') && !query.includes('recommendations')) {
+    const queryLower = query.toLowerCase();
+    if (!queryLower.includes('product') && !queryLower.includes('recommendation')) {
       return NextResponse.json(
         { error: 'This endpoint only handles product and recommendation operations' },
         { status: 400 }
@@ -20,13 +21,26 @@ export async function POST(req: Request) {
       body: JSON.stringify({ query, variables }),
     });
 
-    const { data, errors } = await response.json();
-
-    if (errors && errors.length > 0) {
-      return NextResponse.json({ error: errors }, { status: 400 });
+    if (!response.ok) {
+      console.error('Backend returned error:', response.status, response.statusText);
+      const text = await response.text();
+      console.error('Backend response:', text);
+      return NextResponse.json(
+        {
+          error: `Backend error: ${response.status} ${response.statusText}`,
+        },
+        { status: response.status }
+      );
     }
 
-    return NextResponse.json({ data });
+    const result = await response.json();
+
+    if (result.errors && result.errors.length > 0) {
+      console.error('GraphQL errors:', result.errors);
+      return NextResponse.json({ error: result.errors }, { status: 400 });
+    }
+
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });

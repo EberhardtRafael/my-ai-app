@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { Product } from '@/utils/fetchProducts';
 import ProductCard from './ProductCard';
+import InfoMessage from './ui/InfoMessage';
 
 type ProductGridProps = {
   products: Product[];
@@ -18,7 +19,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {products.length === 0 ? (
-        <p className="text-gray-600">{emptyMessage}</p>
+        <div className="col-span-full">
+          <InfoMessage message={emptyMessage} />
+        </div>
       ) : (
         products.map((product) => {
           const firstColor = product.variants?.[0]?.color;
