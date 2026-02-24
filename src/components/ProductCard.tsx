@@ -4,6 +4,10 @@ import Link from 'next/link';
 import type React from 'react';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
+import ProductBrand from '@/components/ui/ProductBrand';
+import ProductPrice from '@/components/ui/ProductPrice';
+import ProductRating from '@/components/ui/ProductRating';
+import ProductTitle from '@/components/ui/ProductTitle';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
 import { getProductImageUrl } from '@/utils/colorUtils';
@@ -14,8 +18,8 @@ type ProductCardProps = {
   category?: string;
   price?: number | string;
   brand?: string;
-  rating_avg?: number;
-  rating_count?: number;
+  ratingAvg?: number;
+  ratingCount?: number;
   className?: string;
   userId?: string;
   initialIsFavorite?: boolean;
@@ -28,8 +32,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   category,
   price,
   brand,
-  rating_avg,
-  rating_count,
+  ratingAvg,
+  ratingCount,
   className = '',
   userId,
   initialIsFavorite = false,
@@ -93,19 +97,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex justify-between items-start">
         <Link href={`/pdp/${id}`} className="flex-1">
           <div>
-            {brand && <p className="text-xs text-gray-400 uppercase tracking-wide">{brand}</p>}
-            <h2 className="font-semibold">{name}</h2>
-            <p className="text-gray-500 text-sm">{category}</p>
-            {rating_avg !== undefined && rating_avg > 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-yellow-500">★</span>
-                <span className="text-sm font-medium">{rating_avg.toFixed(1)}</span>
-                {rating_count !== undefined && rating_count > 0 && (
-                  <span className="text-xs text-gray-400">({rating_count})</span>
-                )}
-              </div>
-            )}
-            <p className="font-bold mt-2">${price}</p>
+            <ProductBrand brand={brand} />
+            <ProductTitle name={name} category={category} />
+            <ProductRating rating={ratingAvg} count={ratingCount} className="mt-1" />
+            <ProductPrice price={price} className="mt-2" />
           </div>
         </Link>
 

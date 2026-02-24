@@ -4,6 +4,8 @@ import { getProductImageUrl } from '@/utils/colorUtils';
 import type { CartItem } from '@/utils/fetchCart';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
+import ProductPrice from './ui/ProductPrice';
+import ProductTitle from './ui/ProductTitle';
 import QuantitySelector from './ui/QuantitySelector';
 
 type CartItemProps = {
@@ -38,9 +40,8 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
           href={`/pdp/${item.product.id}`}
           className="cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <h3 className="font-semibold text-lg text-gray-800">{item.product.name}</h3>
+          <ProductTitle name={item.product.name} category={item.product.category} />
         </Link>
-        <p className="text-sm text-gray-600">{item.product.category}</p>
         <div className="flex items-center gap-2 mt-1">
           <p className="text-sm text-gray-600">
             Color: {item.variant.color} | Size: {item.variant.size}
@@ -55,7 +56,7 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
             Only {item.variant.stock} left in stock
           </p>
         )}
-        <p className="font-semibold text-gray-800 mt-2">${item.product.price.toFixed(2)}</p>
+        <ProductPrice price={item.product.price.toFixed(2)} className="mt-2" />
       </div>
 
       {/* Quantity Controls */}

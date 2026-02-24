@@ -14,9 +14,21 @@ fi
 # Reinitialize database with new schema
 echo "🗄️  Reinitializing database with enhanced schema..."
 python3 << 'EOF'
-from models import init_db
+from models import init_db, session, Order
+from sqlalchemy import text
 print("Creating new schema...")
 init_db()
+
+# Reset auto-increment sequences if table exists
+# This prevents UNIQUE constraint errors after fresh init
+print("Resetting auto-increment sequences...")
+try:
+    session.execute(text("DELETE FROM sqlite_sequence"))
+    session.commit()
+    print("Cleared sqlite_sequence table")
+except Exception as e:
+    print(f"sqlite_sequence table doesn't exist yet (expected on fresh DB): {e}")
+    
 print("✅ Schema created successfully")
 EOF
 

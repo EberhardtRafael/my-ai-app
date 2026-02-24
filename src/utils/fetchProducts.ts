@@ -7,11 +7,11 @@ export type Product = {
   brand?: string;
   material?: string;
   tags?: string;
-  rating_avg?: number;
-  rating_count?: number;
-  sales_count?: number;
-  image_url?: string;
-  created_at?: string;
+  ratingAvg?: number;
+  ratingCount?: number;
+  salesCount?: number;
+  imageUrl?: string;
+  createdAt?: string;
   [key: string]: any; // allows arbitrary new props
 };
 
@@ -38,7 +38,7 @@ export async function fetchProducts(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: `{ products(searchTerm: "${searchTerm}", category: "${toGraphQlArg(category)}", color: "${toGraphQlArg(color)}", offset: ${offset}, limit: ${limit}) { 
-        id name category price description brand material tags rating_avg rating_count sales_count image_url created_at
+        id name category price description brand material tags ratingAvg ratingCount salesCount imageUrl createdAt
         variants { id sku color size stock } 
       } }`,
     }),

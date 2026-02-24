@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { Product } from '@/utils/fetchProducts';
 import { fetchTrending } from '@/utils/fetchTrending';
-import ProductGrid from './ProductGrid';
+import Carousel from './ui/Carousel';
+import ProductCardCompact from './ui/ProductCardCompact';
 import SectionHeader from './ui/SectionHeader';
 
 type TrendingProductsProps = {
@@ -45,8 +46,8 @@ export default function TrendingProducts({
     return (
       <section className="py-8">
         <SectionHeader
-          title="🔥 Trending Now"
-          subtitle={`Hot items everyone's buying in the last ${hours} hours`}
+          title="Trending Now"
+          subtitle={`Popular items in the last ${hours} hours`}
         />
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900" />
@@ -59,8 +60,8 @@ export default function TrendingProducts({
     return (
       <section className="py-8">
         <SectionHeader
-          title="🔥 Trending Now"
-          subtitle={`Hot items everyone's buying in the last ${hours} hours`}
+          title="Trending Now"
+          subtitle={`Popular items in the last ${hours} hours`}
         />
         <div className="text-center py-8 text-red-600">{error}</div>
       </section>
@@ -74,15 +75,25 @@ export default function TrendingProducts({
   return (
     <section className="py-8">
       <SectionHeader
-        title="🔥 Trending Now"
-        subtitle={`Hot items everyone's buying in the last ${hours} hours`}
+        title="Trending Now"
+        subtitle={`Popular items in the last ${hours} hours`}
       />
-      <ProductGrid
-        products={products}
-        userId={userId}
-        favoriteProductIds={favoriteProductIds}
-        emptyMessage="No trending products at the moment"
-      />
+      <Carousel itemsPerView={5} gap={12}>
+        {products.map((product) => {
+          const firstColor = product.variants?.[0]?.color;
+          return (
+            <ProductCardCompact
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              userId={userId}
+              initialIsFavorite={favoriteProductIds.includes(product.id as number)}
+              color={firstColor}
+            />
+          );
+        })}
+      </Carousel>
     </section>
   );
 }
