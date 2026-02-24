@@ -3,10 +3,12 @@ Machine Learning Product Recommendations
 Combines collaborative filtering and content-based filtering:
 - Collaborative: Based on user purchase patterns (who bought what together)
 - Content-based: Based on product attributes (description, tags, material, brand)
+- Quality Filter: Bayesian average of ratings to penalize poorly-reviewed products
 """
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sqlalchemy.orm import joinedload
@@ -157,23 +159,181 @@ def build_content_similarity_matrix(product_ids: List[int] = None) -> pd.DataFra
         db_session.close()
 
 
+def calculate_rating_quality_factor(rating_avg: float, rating_count: int) -> float:
+    """
+    Calculate a quality adjustment factor based on product ratings.
+    Uses Bayesian average (Lower Bound of Wilson Score Interval) to handle:
+    - Cold start problem: Products with few/no reviews aren't penalized
+    - Statistical significance: Only penalize with enough evidence
+    - Confidence: More reviews = more confidence in the rating
+    
+    This creates a conservative estimate of the "true" quality score.
+    
+    Args:
+        rating_avg: Average rating (0-5 stars)
+        rating_count: Number of reviews
+    
+    Returns:
+        Quality factor between 0.5 and 1.2:
+        - 1.0 = neutral (no reviews or average rating)
+        - < 1.0 = penalty for statistically significant bad ratings
+        - > 1.0 = boost for excellent ratings with high confidence
+    
+    Mathematical Approach:
+    - Uses Wilson score interval (binomial proportion confidence interval)
+    - Converts 5-star rating to success probability: (rating_avg - 1) / 4
+    - Calculates lower bound of 95% confidence interval
+    - Only applies penalty/boost when we're statistically confident
+    """
+    # No reviews = no penalty (cold start protection)
+    if rating_count == 0:
+        return 1.0
+    
+    # Require minimum reviews for statistical significance
+    MIN_REVIEWS_FOR_PENALTY = 5  # Need at least 5 reviews to apply penalties
+    MIN_REVIEWS_FOR_BOOST = 10   # Need at least 10 reviews to apply boosts
+    
+    # Convert 5-star rating to probability (0 to 1 scale)
+    # 1 star = 0%, 5 stars = 100%, 3 stars = 50%
+    success_rate = (rating_avg - 1.0) / 4.0  # Maps [1,5] to [0,1]
+    
+    # Calculate Wilson score lower bound (conservative estimate)
+    # This is the lower bound of 95% confidence interval
+    z = 1.96  # 95% confidence (z-score)
+    n = rating_count
+    
+    # Wilson score formula
+    # https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval
+    denominator = 1 + z**2 / n
+    center = success_rate + z**2 / (2*n)
+    spread = z * np.sqrt((success_rate * (1 - success_rate) + z**2 / (4*n)) / n)
+    
+    wilson_lower_bound = (center - spread) / denominator
+    
+    # Map Wilson score back to quality factor
+    # Wilson score is on [0, 1], we want factor on [0.5, 1.2]
+    
+    # Decision logic:
+    # 1. Excellent products (4.5+ stars, 10+ reviews): Boost up to 1.2x
+    # 2. Good products (3.5-4.5 stars): Neutral around 1.0x
+    # 3. Bad products (< 3.5 stars, 5+ reviews): Penalize down to 0.5x
+    # 4. Uncertain products (< 5 reviews): Stay near 1.0x (neutral)
+    
+    if rating_count < MIN_REVIEWS_FOR_PENALTY:
+        # Too few reviews to be confident - stay neutral
+        return 1.0
+    
+    # Map wilson_lower_bound [0, 1] to quality_factor
+    # 0.0 (terrible) -> 0.5x penalty
+    # 0.5 (neutral) -> 1.0x neutral
+    # 1.0 (perfect) -> 1.2x boost (but only with enough reviews)
+    
+    if rating_avg >= 4.5 and rating_count >= MIN_REVIEWS_FOR_BOOST:
+        # Excellent product with confidence - give boost
+        quality_factor = 1.0 + (wilson_lower_bound - 0.5) * 0.4
+        return np.clip(quality_factor, 1.0, 1.2)
+    
+    elif rating_avg < 3.5:
+        # Below average product - apply penalty
+        quality_factor = 0.5 + wilson_lower_bound
+        return np.clip(quality_factor, 0.5, 1.0)
+    
+    else:
+        # Average product (3.5-4.5) - stay neutral to slight boost
+        quality_factor = 0.9 + wilson_lower_bound * 0.2
+        return np.clip(quality_factor, 0.9, 1.1)
+
+
+def apply_rating_quality_to_recommendations(
+    recommendations: List[Dict],
+    db_session
+) -> List[Dict]:
+    """
+    Apply rating quality factors to recommendation scores.
+    Fetches product ratings and adjusts scores accordingly.
+    
+    Args:
+        recommendations: List of dicts with 'product_id' and 'score'
+        db_session: Database session
+    
+    Returns:
+        Updated recommendations with quality-adjusted scores
+    """
+    if not recommendations:
+        return recommendations
+    
+    # Fetch product ratings
+    product_ids = [rec['product_id'] for rec in recommendations]
+    products = db_session.query(Product).filter(
+        Product.id.in_(product_ids)
+    ).all()
+    
+    # Build rating lookup
+    ratings_lookup = {
+        p.id: {
+            'rating_avg': p.rating_avg or 0.0,
+            'rating_count': p.rating_count or 0
+        }
+        for p in products
+    }
+    
+    # Apply quality factors
+    adjusted_recommendations = []
+    for rec in recommendations:
+        product_id = rec['product_id']
+        original_score = rec['score']
+        
+        if product_id in ratings_lookup:
+            rating_data = ratings_lookup[product_id]
+            quality_factor = calculate_rating_quality_factor(
+                rating_avg=rating_data['rating_avg'],
+                rating_count=rating_data['rating_count']
+            )
+            
+            adjusted_score = original_score * quality_factor
+            
+            # Debug logging
+            if rating_data['rating_count'] > 0:
+                print(f"[RATING] Product {product_id}: "
+                      f"{rating_data['rating_avg']:.1f}★ ({rating_data['rating_count']} reviews) "
+                      f"→ Quality factor: {quality_factor:.2f}x "
+                      f"(Score: {original_score:.3f} → {adjusted_score:.3f})")
+            
+            adjusted_recommendations.append({
+                'product_id': product_id,
+                'score': adjusted_score,
+                'quality_factor': quality_factor
+            })
+        else:
+            # Product not found, keep original score
+            adjusted_recommendations.append(rec)
+    
+    # Re-sort by adjusted scores
+    adjusted_recommendations.sort(key=lambda x: x['score'], reverse=True)
+    
+    return adjusted_recommendations
+
+
 def get_hybrid_recommendations(
     cart_product_ids: List[int],
     collaborative_similarity: pd.DataFrame,
     limit: int = 5,
-    exclude_product_ids: List[int] = None
+    exclude_product_ids: List[int] = None,
+    db_session = None
 ) -> List[Dict]:
     """
     Hybrid recommendation combining collaborative and content-based filtering.
+    Now includes rating quality adjustment to penalize poorly-reviewed products.
     
     Args:
         cart_product_ids: Products currently in cart
         collaborative_similarity: Pre-calculated collaborative filtering similarity matrix
         limit: Number of recommendations to return
         exclude_product_ids: Products to exclude from results
+        db_session: Optional database session for rating lookups
     
     Returns:
-        List of recommended product IDs with hybrid scores
+        List of recommended product IDs with hybrid scores (adjusted by quality)
     """
     exclude_product_ids = exclude_product_ids or []
     
@@ -216,25 +376,22 @@ def get_hybrid_recommendations(
                 recommendations_scores[similar_product_id]['content'] += content_score
     
     # Calculate hybrid scores
-    hybrid_scores = {}
+    hybrid_scores = []
     for product_id, scores in recommendations_scores.items():
         hybrid_score = (
             scores['cf'] * COLLABORATIVE_WEIGHT +
             scores['content'] * CONTENT_WEIGHT
         )
-        hybrid_scores[product_id] = hybrid_score
+        hybrid_scores.append({'product_id': int(product_id), 'score': float(hybrid_score)})
     
-    # Sort by hybrid score
-    sorted_recommendations = sorted(
-        hybrid_scores.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
+    # Apply rating quality adjustment if db_session provided
+    if db_session:
+        hybrid_scores = apply_rating_quality_to_recommendations(hybrid_scores, db_session)
     
-    return [
-        {'product_id': int(product_id), 'score': float(score)}
-        for product_id, score in sorted_recommendations[:limit]
-    ]
+    # Sort by adjusted score
+    hybrid_scores.sort(key=lambda x: x['score'], reverse=True)
+    
+    return hybrid_scores[:limit]
 
 
 def get_recommendations_for_items(
@@ -380,7 +537,8 @@ def get_cart_recommendations(user_id: int, limit: int = 5) -> List[Product]:
             cart_product_ids=cart_product_ids,
             collaborative_similarity=similarity_df,
             limit=limit * 2,  # Get extra to filter out unavailable
-            exclude_product_ids=exclude_product_ids
+            exclude_product_ids=exclude_product_ids,
+            db_session=db_session  # Pass session for rating quality adjustment
         )
         
         print(f"[DEBUG] User {user_id} - Hybrid filtering found {len(recommendations)} recommendations")
