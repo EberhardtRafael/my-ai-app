@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./src/app/api/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/app/api/backend:/app
+      - backend-data:/app/data
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    command: python3 app.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/graphql"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=development-secret-change-in-production
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: yarn dev
+
+volumes:
+  backend-data:

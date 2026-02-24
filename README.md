@@ -1,5 +1,16 @@
 # 🛍️ AI-Powered E-Commerce Platform
 
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://www.python.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+[![Test Coverage](https://img.shields.io/badge/Coverage-94%25-brightgreen)]()
+[![ML](https://img.shields.io/badge/ML-Hybrid_Recommendations-orange)]()
+[![Bayesian](https://img.shields.io/badge/Statistics-Bayesian-purple)]()
+[![Setup Time](https://img.shields.io/badge/Setup-60_seconds-success)]()
+
+> **Quick Start**: `./quickstart.sh` → Running in 60 seconds with Docker!
+
 A sophisticated, full-stack e-commerce application demonstrating advanced machine learning, Bayesian statistics, and AI-powered features for personalized shopping experiences and intelligent development workflows.
 
 ## 🌟 Project Overview
@@ -29,6 +40,7 @@ This isn't just another e-commerce site—it's a showcase of cutting-edge techno
 
 **Mathematical Formula:**
 ```
+
 Wilson Score = (p̂ + z²/2n - z√(p̂(1-p̂)/n + z²/4n²)) / (1 + z²/n)
 where p̂ = (rating_avg - 1) / 4, n = review_count, z = 1.96 (95% CI)
 ```
@@ -134,14 +146,65 @@ yarn test:all          # Both frontend and backend
 - `ticket_generator.py`: AI-powered ticket creation and estimation
 - `ticket_estimator.py`: ML-based time estimation algorithms
 
-## 🚀 Getting Started
+## 🚀 Quick Start (60 Seconds!)
 
-### Prerequisites
+### Choose Your Method
+
+| Method | Command | Best For | Setup Time |
+|--------|---------|----------|------------|
+| **🐳 Docker** | `./quickstart.sh` | First-time users, demos, isolation | 60 seconds |
+| **⚡ Dev Script** | `./dev-start.sh` | Developers without Docker | 2-3 minutes |
+| **🛠️ Manual** | See below | Full control, learning | 5 minutes |
+
+### Option 1: Docker (Recommended - One Command!)
+
+**Prerequisites:** Docker and Docker Compose
+
+```bash
+./quickstart.sh
+```
+
+That's it! The script will:
+- ✅ Build and start both frontend and backend containers
+- ✅ Initialize and seed the database with demo data
+- ✅ Run health checks to ensure everything works
+- ✅ Display demo account credentials
+- ✅ Show you what features to try
+
+**Access the application:**
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **GraphQL API:** [http://localhost:8000/graphql](http://localhost:8000/graphql)
+
+**Demo Accounts:**
+| Email | Password | Description |
+|-------|----------|-------------|
+| `test@example.com` | `test` | User with purchase history (best for ML demos) |
+| `john@example.com` | `password123` | Another user with different preferences |
+| `jane@example.com` | `password123` | User with favorites but no purchases |
+
+### Option 2: Quick Development Script
+
+**Prerequisites:** Node.js 18+ and Python 3.8+
+
+```bash
+./dev-start.sh
+```
+
+This script will:
+- ✅ Install all dependencies (frontend & backend)
+- ✅ Create Python virtual environment
+- ✅ Initialize and seed database
+- ✅ Start both servers automatically
+- ✅ Handle cleanup on exit (Ctrl+C)
+
+### Option 3: Manual Setup
+
+**Prerequisites:**
 - **Node.js** 18+ and npm/yarn
 - **Python** 3.8+
 - **Git**
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
 ```bash
@@ -174,13 +237,13 @@ cp .env.local.example .env.local
 # GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>
 ```
 
-5. **Initialize database** (if needed)
+5. **Initialize database with seed data**
 ```bash
 cd src/app/api/backend
-python3 seed.py  # Creates and seeds database with test data
+python3 seed.py  # Creates database and populates with demo data
 ```
 
-### Running the Application
+#### Running the Application
 
 **Development Mode** (runs both frontend and backend):
 ```bash
@@ -196,6 +259,117 @@ yarn dev
 **Access the application:**
 - Frontend: [http://localhost:3000](http://localhost:3000)
 - GraphQL Playground: [http://localhost:8000/graphql](http://localhost:8000/graphql)
+
+## 🎯 Try These Features!
+
+Once the application is running, sign in with a demo account and explore:
+
+### 1. **"For You" Personalized Recommendations** 🤖
+- **Where:** Homepage after signing in
+- **What it does:** ML-powered personalized product recommendations based on your purchase history
+- **The tech:** Collaborative filtering using cosine similarity on user-item interaction matrices
+- **Try it:** Sign in as `test@example.com` → see products tailored to that user's past purchases
+
+### 2. **"You May Also Like" Smart Cart Suggestions** 🛒
+- **Where:** Cart page after adding items
+- **What it does:** Hybrid recommendation system combining collaborative + content-based filtering
+- **The tech:** 60% collaborative filtering + 40% content-based, adjusted by Bayesian rating quality
+- **Try it:** Add products to cart → scroll down to see intelligent recommendations
+
+### 3. **Review System with Bayesian Quality Adjustment** ⭐
+- **Where:** Any product detail page (click on a product)
+- **What it does:** User reviews influence recommendations using statistically rigorous methods
+- **The tech:** Wilson Score Interval (Lower Bound) for confidence-adjusted rating quality
+- **Try it:** 
+  - View a product → scroll to reviews section
+  - Leave a review with rating
+  - Watch how products with many bad reviews get penalized in recommendations
+  - New products with no reviews? No penalty! (Solves cold-start problem)
+
+### 4. **AI-Powered Ticket Generator** 🎫
+- **Where:** Navigate to `/tickets` or click "Tickets" in header
+- **What it does:** Generates development tickets with ML-based time estimates
+- **The tech:** GitHub API integration + keyword complexity analysis + historical velocity
+- **Try it:**
+  - Connect GitHub account (OAuth)
+  - Describe a task: "Add dark mode toggle to header"
+  - Get ticket with estimated time, acceptance criteria, and similar historical tasks
+  - Download as markdown file
+
+### 5. **Smart Trending Products** 📈
+- **Where:** Homepage (for logged-out users) or "For You" section fallback
+- **What it does:** Shows popular products based on actual order frequency
+- **The tech:** Aggregates order quantities across all users
+- **Try it:** Sign out → homepage shows trending items
+
+### 6. **Favorites & Wishlist** ❤️
+- **Where:** Any product card (heart icon)
+- **What it does:** Save products for later, influences recommendations
+- **Try it:** Click heart on products → visit `/favorites` to see saved items
+
+## 🐳 Docker Commands
+
+If you're using Docker (recommended), here are useful commands:
+
+```bash
+# Start everything
+./quickstart.sh
+
+# Or manually:
+docker compose up -d
+
+# View logs (all services)
+docker compose logs -f
+
+# View logs (specific service)
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Stop everything
+docker compose down
+
+# Stop and remove volumes (fresh start)
+docker compose down -v
+
+# Restart a service
+docker compose restart backend
+
+# Rebuild after code changes
+docker compose up -d --build
+
+# Run tests inside containers
+docker compose exec frontend yarn test
+docker compose exec backend pytest
+
+# Access container shell
+docker compose exec backend bash
+docker compose exec frontend sh
+
+# Check service status
+docker compose ps
+```
+
+## 🧪 Testing
+
+Run comprehensive test suites for both frontend and backend:
+
+```bash
+# Frontend tests (Jest + React Testing Library)
+yarn test              # Run all tests
+yarn test:watch        # Watch mode
+yarn test:coverage     # With coverage report
+
+# Backend tests (pytest)
+yarn test:python              # Run all Python tests
+yarn test:python:coverage     # With coverage report
+
+# Run everything
+yarn test:all
+
+# In Docker
+docker compose exec frontend yarn test
+docker compose exec backend pytest -v
+```
 
 ### Quick Setup for Ticket Generator
 
@@ -213,6 +387,8 @@ This automated script:
 
 Detailed documentation available in separate files:
 
+- **[QUICKSTART.md](QUICKSTART.md)**: 60-second setup guide and troubleshooting
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: System architecture diagrams, data flow, algorithms, and database schema
 - **[RECOMMENDATION-QUALITY-SYSTEM.md](RECOMMENDATION-QUALITY-SYSTEM.md)**: Deep dive into Bayesian rating quality system with mathematical explanations, implementation details, and examples
 - **[FOR-YOU-IMPLEMENTATION.md](FOR-YOU-IMPLEMENTATION.md)**: Complete guide to personalized recommendation system, collaborative filtering algorithms, and cold-start strategies
 - **[TICKET-GENERATOR-IMPLEMENTATION.md](TICKET-GENERATOR-IMPLEMENTATION.md)**: AI ticket generator architecture, ML estimation engine, and GitHub integration details

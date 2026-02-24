@@ -1,0 +1,53 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# Next.js
+.next
+out
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.pytest_cache
+.coverage
+htmlcov
+venv
+env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env.local
+.env*.local
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+*.log
+.cache
