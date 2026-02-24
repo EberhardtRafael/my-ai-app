@@ -388,6 +388,8 @@ This automated script:
 Detailed documentation available in separate files:
 
 - **[QUICKSTART.md](QUICKSTART.md)**: 60-second setup guide and troubleshooting
+- **[FEATURES.md](FEATURES.md)**: Complete feature list (200+ features implemented)
+- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**: Executive summary for technical assessment
 - **[ARCHITECTURE.md](ARCHITECTURE.md)**: System architecture diagrams, data flow, algorithms, and database schema
 - **[RECOMMENDATION-QUALITY-SYSTEM.md](RECOMMENDATION-QUALITY-SYSTEM.md)**: Deep dive into Bayesian rating quality system with mathematical explanations, implementation details, and examples
 - **[FOR-YOU-IMPLEMENTATION.md](FOR-YOU-IMPLEMENTATION.md)**: Complete guide to personalized recommendation system, collaborative filtering algorithms, and cold-start strategies

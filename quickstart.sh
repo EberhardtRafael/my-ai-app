@@ -17,9 +17,21 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is available
-if ! docker compose version &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose is not available. Please update Docker.${NC}"
-    exit 1
+if ! docker compose version &> /dev/null 2>&1; then
+    if ! command -v docker-compose &> /dev/null; then
+        echo -e "${RED}❌ Docker Compose is not available.${NC}"
+        echo -e "${YELLOW}Please install Docker Compose:${NC}"
+        echo -e "  - Ubuntu/Debian: sudo apt-get install docker-compose-plugin"
+        echo -e "  - Or follow: https://docs.docker.com/compose/install/"
+        echo -e "\n${BLUE}Alternative: Try the development script instead:${NC}"
+        echo -e "  ${GREEN}./dev-start.sh${NC}"
+        exit 1
+    else
+        # Use old docker-compose command
+        COMPOSE_CMD="docker-compose"
+    fi
+else
+    COMPOSE_CMD="docker compose"
 fi
 
 echo -e "${GREEN}✓ Docker found${NC}"
@@ -35,7 +47,7 @@ EOF
 fi
 
 echo -e "\n${BLUE}📦 Building and starting containers...${NC}"
-docker compose up -d --build
+$COMPOSE_CMD up -d --build
 
 echo -e "\n${BLUE}⏳ Waiting for services to be ready...${NC}"
 sleep 5
@@ -48,7 +60,7 @@ for i in {1..30}; do
         break
     fi
     if [ $i -eq 30 ]; then
-        echo -e "${RED}❌ Backend failed to start. Check logs with: docker compose logs backend${NC}"
+        echo -e "${RED}❌ Backend failed to start. Check logs with: $COMPOSE_CMD logs backend${NC}"
         exit 1
     fi
     sleep 2
@@ -62,7 +74,7 @@ for i in {1..30}; do
         break
     fi
     if [ $i -eq 30 ]; then
-        echo -e "${RED}❌ Frontend failed to start. Check logs with: docker compose logs frontend${NC}"
+        echo -e "${RED}❌ Frontend failed to start. Check logs with: $COMPOSE_CMD logs frontend${NC}"
         exit 1
     fi
     sleep 2
@@ -85,9 +97,9 @@ echo -e "   3. Leave a review → watch ${YELLOW}Bayesian quality adjustment${NC
 echo -e "   4. Visit ${YELLOW}/tickets${NC} → generate AI-powered development tickets\n"
 
 echo -e "${BLUE}🛠️  Useful Commands:${NC}"
-echo -e "   View logs:    ${YELLOW}docker compose logs -f${NC}"
-echo -e "   Stop:         ${YELLOW}docker compose down${NC}"
-echo -e "   Restart:      ${YELLOW}docker compose restart${NC}"
-echo -e "   Run tests:    ${YELLOW}docker compose exec frontend yarn test${NC}\n"
+echo -e "   View logs:    ${YELLOW}$COMPOSE_CMD logs -f${NC}"
+echo -e "   Stop:         ${YELLOW}$COMPOSE_CMD down${NC}"
+echo -e "   Restart:      ${YELLOW}$COMPOSE_CMD restart${NC}"
+echo -e "   Run tests:    ${YELLOW}$COMPOSE_CMD exec frontend yarn test${NC}\n"
 
 echo -e "${GREEN}🎉 Happy exploring!${NC}\n"
