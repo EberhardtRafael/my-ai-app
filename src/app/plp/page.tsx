@@ -3,6 +3,7 @@ import { PLP_PAGINATION_LIMIT } from '@/utils/constans';
 import { fetchProducts } from '@/utils/fetchProducts';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import ProductList from './productList';
+import PageHeader from '@/components/ui/PageHeader';
 
 export type FilterParams = { [key: string]: string | undefined };
 
@@ -46,7 +47,7 @@ export default async function ProductPage({ searchParams }: ProductPageProps) {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-6">{plpTitleText}</h1>
+      <PageHeader title={plpTitleText} />
       <ProductList
         initialProducts={products}
         initialFilters={params as FilterParams}

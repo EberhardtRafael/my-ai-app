@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { CartIcon, ChevronDownIcon, DocumentTextIcon } from '@/icons/HeaderIcons';
 import { HeartIcon } from '@/icons/HeartIcon';
 import Dropdown from './ui/Dropdown';
 import SearchBox from './ui/SearchBox';
@@ -144,9 +145,19 @@ export default function Header() {
             </Button>
           </Link>
           {session && (
-            <Link href="/orders">
-              <Button disabled={pathname === '/orders'}>Orders</Button>
-            </Link>
+            <>
+              <Link href="/orders">
+                <Button disabled={pathname === '/orders'}>Orders</Button>
+              </Link>
+              <Link href="/tickets">
+                <Button disabled={pathname === '/tickets'}>
+                  <span className="flex items-center gap-2">
+                    <DocumentTextIcon />
+                    Tickets
+                  </span>
+                </Button>
+              </Link>
+            </>
           )}
         </nav>
 
@@ -162,33 +173,19 @@ export default function Header() {
             <>
               <Link href="/cart">
                 <Tooltip text="Shopping Cart">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     className="p-2 hover:text-gray-500 transition-colors relative"
                     aria-label="Cart"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <title>Shopping Cart</title>
-                      <circle cx="9" cy="21" r="1" />
-                      <circle cx="20" cy="21" r="1" />
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                    </svg>
+                    <CartIcon />
                     {cartItemsCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {cartItemsCount}
                       </span>
                     )}
-                  </button>
+                  </Button>
                 </Tooltip>
               </Link>
 
@@ -196,28 +193,16 @@ export default function Header() {
               <Dropdown
                 items={dropdownItems}
                 trigger={
-                  <button
+                  <Button
                     type="button"
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+                    variant="ghost"
+                    className="flex items-center gap-2 px-3 py-2"
                   >
                     <span className="text-sm whitespace-nowrap">
                       {session.user?.name || session.user?.email}
                     </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <title>User menu</title>
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
+                    <ChevronDownIcon />
+                  </Button>
                 }
               />
             </>

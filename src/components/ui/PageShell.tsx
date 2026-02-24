@@ -1,4 +1,5 @@
 import type React from 'react';
+import InfoMessage from './InfoMessage';
 
 type PageShellProps = {
   title: string;
@@ -26,7 +27,11 @@ const PageShell: React.FC<PageShellProps> = ({
         </div>
 
         {requireAuth && !isAuthenticated ? (
-          <p className="text-gray-600">Please sign in to view this page.</p>
+          <InfoMessage
+            message="Please sign in to view this page."
+            linkText="Sign in here"
+            linkHref="/auth/signin"
+          />
         ) : loading ? (
           <p>Loading...</p>
         ) : (

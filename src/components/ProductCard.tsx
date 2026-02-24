@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type React from 'react';
 import { useState } from 'react';
+import Button from '@/components/ui/Button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
 import { getProductImageUrl } from '@/utils/colorUtils';
@@ -94,15 +95,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Favorite Button */}
         {userId && (
-          <button
+          <Button
             type="button"
             onClick={handleToggleFavorite}
             disabled={loading}
-            className="p-2 rounded-full hover:bg-gray-100 transition flex-shrink-0 ml-2"
+            variant="ghost"
+            className="p-2 flex-shrink-0 ml-2"
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             {isFavorite ? <HeartFilledIcon /> : <HeartIcon />}
-          </button>
+          </Button>
         )}
       </div>
     </div>

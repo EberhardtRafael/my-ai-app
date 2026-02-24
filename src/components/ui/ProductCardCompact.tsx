@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type React from 'react';
 import { useState } from 'react';
+import Button from '@/components/ui/Button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
 import { getProductImageUrl } from '@/utils/colorUtils';
@@ -21,7 +22,6 @@ type ProductCardCompactProps = {
 const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   id,
   name,
-  category,
   price,
   className = '',
   userId,
@@ -81,11 +81,12 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         <div className="relative aspect-video bg-gray-100">
           <img src={imageUrl} alt={name || 'Product'} className="w-full h-full object-cover" />
           {userId && (
-            <button
+            <Button
               type="button"
               onClick={handleToggleFavorite}
               disabled={loading}
-              className="absolute top-1 right-1 p-0.5 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
+              variant="ghost"
+              className="absolute top-1 right-1 p-0.5 bg-white shadow-sm hover:shadow-md"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               {isFavorite ? (
@@ -93,7 +94,7 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
               ) : (
                 <HeartIcon className="w-2.5 h-2.5 text-gray-600" />
               )}
-            </button>
+            </Button>
           )}
         </div>
 

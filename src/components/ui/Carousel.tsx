@@ -1,7 +1,10 @@
 'use client';
 
-import React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/icons/NavigationIcons';
+import Button from './Button';
+import CarouselItems from './CarouselItems';
+import PaginationDots from './PaginationDots';
 
 type CarouselProps = {
   children: React.ReactNode;
@@ -61,26 +64,15 @@ const Carousel: React.FC<CarouselProps> = ({
     <div className={`relative ${className}`}>
       {/* Left Arrow */}
       {canScrollLeft && (
-        <button
+        <Button
           type="button"
           onClick={scrollLeft}
+          variant="ghost"
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center border border-gray-200"
           aria-label="Scroll left"
         >
-          <svg
-            className="w-6 h-6 text-gray-700"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
+          <ChevronLeftIcon className="w-6 h-6 text-gray-700" />
+        </Button>
       )}
 
       {/* Carousel Container */}
@@ -89,56 +81,26 @@ const Carousel: React.FC<CarouselProps> = ({
         className="overflow-x-hidden"
         style={{ scrollBehavior: 'smooth' }}
       >
-        <div className="flex" style={{ gap: `${gap}px` }}>
-          {childrenArray.map((child, index) => (
-            <div
-              key={index}
-              style={{
-                minWidth: `calc((100% - ${gap * (itemsPerView - 1)}px) / ${itemsPerView})`,
-                maxWidth: `calc((100% - ${gap * (itemsPerView - 1)}px) / ${itemsPerView})`,
-              }}
-            >
-              {child}
-            </div>
-          ))}
-        </div>
+        <CarouselItems itemsPerView={itemsPerView} gap={gap}>
+          {children}
+        </CarouselItems>
       </div>
 
       {/* Right Arrow */}
       {canScrollRight && (
-        <button
+        <Button
           type="button"
           onClick={scrollRight}
+          variant="ghost"
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center border border-gray-200"
           aria-label="Scroll right"
         >
-          <svg
-            className="w-6 h-6 text-gray-700"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+          <ChevronRightIcon className="w-6 h-6 text-gray-700" />
+        </Button>
       )}
 
       {/* Dots Indicator */}
-      {maxIndex > 0 && (
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => scrollTo(index)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-gray-700' : 'bg-gray-300'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
+      <PaginationDots total={maxIndex + 1} currentIndex={currentIndex} onDotClick={scrollTo} />
     </div>
   );
 };

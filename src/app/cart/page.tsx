@@ -182,14 +182,15 @@ export default function CartPage() {
   const _total: number = subtotal + shipping + tax;
 
   const clearCartAction = cartItems.length > 0 && (
-    <button
+    <Button
       type="button"
       onClick={handleClearCart}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg hover:bg-gray-200 transition-colors text-gray-700 hover:text-gray-900"
+      variant="ghost"
+      className="flex items-center gap-2 px-3 py-1.5 text-sm"
     >
       <TrashIcon className="w-4 h-4" />
       <span className="font-light">Clear Cart</span>
-    </button>
+    </Button>
   );
 
   return (

@@ -13,7 +13,9 @@
     "test:coverage": "jest --coverage",
     "test:python": "cd src/app/api/backend && /usr/bin/python3 -m pytest -v",
     "test:python:coverage": "cd src/app/api/backend && /usr/bin/python3 -m pytest --cov=. --cov-report=html --cov-report=term",
-    "test:all": "yarn test && yarn test:python"
+    "test:all": "yarn test && yarn test:python",
+    "backend": "cd src/app/api/backend && source venv/bin/activate && python app.py",
+    "setup:tickets": "./setup-ticket-generator.sh"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",
