@@ -76,14 +76,15 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
             </Button>
           )}
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => onRemove(item.id)}
-          className="h-7 w-7 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          variant="ghost"
+          className="h-7 w-7 p-0 hover:bg-gray-200"
           aria-label="Remove item"
         >
           <TrashIcon className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

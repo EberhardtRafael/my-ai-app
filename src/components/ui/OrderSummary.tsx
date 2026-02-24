@@ -40,9 +40,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ subtotal, shipping, tax, it
 
   return (
     <div className="space-y-2">
-      {lines.map((line, index) => (
+      {lines.map((line) => (
         <div
-          key={index}
+          key={line.label}
           className={`flex justify-between ${line.hasBorder ? 'border-t border-gray-300 pt-2' : ''} ${line.isBold ? 'font-semibold text-gray-800' : 'text-gray-700'}`}
         >
           <span>{line.label}</span>

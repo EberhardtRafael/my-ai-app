@@ -1,17 +1,17 @@
 import type React from 'react';
 
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
   id: string;
 };
 
-const Input: React.FC<InputProps> = ({ label, id, className = '', ...rest }) => {
+const Textarea: React.FC<TextareaProps> = ({ label, id, className = '', ...rest }) => {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
-      <input
+      <textarea
         id={id}
         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${className}`}
         {...rest}
@@ -20,4 +20,4 @@ const Input: React.FC<InputProps> = ({ label, id, className = '', ...rest }) => 
   );
 };
 
-export default Input;
+export default Textarea;

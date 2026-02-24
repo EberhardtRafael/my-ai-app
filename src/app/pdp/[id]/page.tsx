@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import SidePanel from '@/components/SidePanel';
+import InfoMessage from '@/components/ui/InfoMessage';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
@@ -136,7 +137,7 @@ export default function PDPPage({ params }: PDPPageProps) {
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">Related Products</h2>
         <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-gray-500">Related products grid will appear here</p>
+          <InfoMessage message="Related products grid will appear here" variant="muted" />
         </div>
       </div>
     </main>

@@ -74,13 +74,16 @@ export default function Home() {
           </Carousel>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">No recommendations available at the moment.</p>
+            <InfoMessage
+              message="No recommendations available at the moment."
+              variant="muted"
+              className="mb-2"
+            />
             <InfoMessage
               message="Browse our products to help us learn your preferences!"
               linkText="catalog"
               linkHref="/plp"
               variant="muted"
-              className="mt-2"
             />
           </div>
         )}

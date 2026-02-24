@@ -13,7 +13,8 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   ...rest
 }) => {
-  const baseStyles = 'px-4 py-2 rounded-xl transition cursor-pointer disabled:cursor-default';
+  const baseStyles =
+    'px-4 py-2 rounded-xl transition cursor-pointer disabled:cursor-default flex items-center justify-center gap-2';
 
   const variantStyles = {
     primary:
