@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 import PageShell from '@/components/ui/PageShell';
+import ProductPrice from '@/components/ui/ProductPrice';
 import { getProductImageUrl } from '@/utils/colorUtils';
 import { fetchOrders, type Order } from '@/utils/fetchOrders';
 
@@ -108,9 +109,10 @@ export default function OrdersPage() {
                       <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-800">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </p>
+                      <ProductPrice 
+                        price={(item.price * item.quantity).toFixed(2)} 
+                        className="text-gray-800"
+                      />
                       <p className="text-xs text-gray-500">${item.price.toFixed(2)} each</p>
                     </div>
                   </div>

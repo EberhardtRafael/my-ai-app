@@ -7,8 +7,8 @@
 '''
 import strawberry
 from typing import List, Optional
-from models import Product, Variant, User, Favorite, Order, OrderItem, session
-from sqlalchemy import or_
+from models import Product, Variant, User, Favorite, Order, OrderItem, Review, session
+from sqlalchemy import or_, func
 from datetime import datetime
 import hashlib
 
@@ -21,6 +21,16 @@ class VariantType:
     color: str
     size: str
     stock: int
+    
+    @staticmethod
+    def from_db(variant):
+        return VariantType(
+            id=variant.id,
+            sku=variant.sku,
+            color=variant.color,
+            size=variant.size,
+            stock=variant.stock
+        )
 
 @strawberry.type
 class ProductType:
@@ -32,12 +42,31 @@ class ProductType:
     brand: Optional[str]
     material: Optional[str]
     tags: Optional[str]
-    rating_avg: float
-    rating_count: int
-    sales_count: int
-    image_url: Optional[str]
-    created_at: str
+    ratingAvg: float
+    ratingCount: int
+    salesCount: int
+    imageUrl: Optional[str]
+    createdAt: str
     variants: List[VariantType]
+    
+    @staticmethod
+    def from_db(product):
+        return ProductType(
+            id=product.id,
+            name=product.name,
+            category=product.category,
+            price=product.price,
+            description=product.description,
+            brand=product.brand,
+            material=product.material,
+            tags=product.tags,
+            ratingAvg=product.rating_avg or 0.0,
+            ratingCount=product.rating_count or 0,
+            salesCount=product.sales_count or 0,
+            imageUrl=product.image_url,
+            createdAt=product.created_at.isoformat() if product.created_at else "",
+            variants=[VariantType.from_db(v) for v in product.variants]
+        )
 
 @strawberry.type
 class UserType:
@@ -45,6 +74,44 @@ class UserType:
     id: int
     username: str
     email: str
+
+@strawberry.type
+class ReviewType:
+    id: int
+    productId: int
+    userId: int
+    username: str
+    rating: int
+    title: Optional[str]
+    comment: Optional[str]
+    verifiedPurchase: bool
+    helpfulCount: int
+    createdAt: str
+    updatedAt: str
+    
+    @staticmethod
+    def from_db(review):
+        return ReviewType(
+            id=review.id,
+            productId=review.product_id,
+            userId=review.user_id,
+            username=review.user.username if review.user else "Anonymous",
+            rating=review.rating,
+            title=review.title,
+            comment=review.comment,
+            verifiedPurchase=bool(review.verified_purchase),
+            helpfulCount=review.helpful_count,
+            createdAt=review.created_at.isoformat() if review.created_at else "",
+            updatedAt=review.updated_at.isoformat() if review.updated_at else ""
+        )
+
+@strawberry.type
+class ReviewStatsType:
+    rating1: int
+    rating2: int
+    rating3: int
+    rating4: int
+    rating5: int
 
 @strawberry.type
 class FavoriteType:
@@ -181,12 +248,13 @@ class Query:
         if color:
             for product in products:
                 product.variants = [variant for variant in product.variants if variant.color == color]
-        return products
+        return [ProductType.from_db(p) for p in products]
     
     @strawberry.field
     def product(self, id: int) -> ProductType:
         # Get a single product by ID
-        return session.query(Product).get(id)
+        db_product = session.query(Product).get(id)
+        return ProductType.from_db(db_product) if db_product else None
     
     @strawberry.field
     def user(self, id: int) -> Optional[UserType]:
@@ -254,7 +322,8 @@ class Query:
         # Get ML-powered product recommendations based on user's cart
         # Uses collaborative filtering to suggest products based on purchase patterns
         from recommendations import get_cart_recommendations
-        return get_cart_recommendations(user_id, limit)
+        products = get_cart_recommendations(user_id, limit)
+        return [ProductType.from_db(p) for p in products]
     
     @strawberry.field
     def trending(self, hours: int = 48, limit: int = 10) -> List[ProductType]:
@@ -300,7 +369,7 @@ class Query:
             product_map[pid] for pid, _ in trending_products if pid in product_map
         ]
         
-        return sorted_products
+        return [ProductType.from_db(p) for p in sorted_products]
     
     @strawberry.field
     def personalized_recommendations(self, user_id: int, limit: int = 8) -> List[ProductType]:
@@ -308,7 +377,44 @@ class Query:
         # Uses collaborative filtering based on user's browsing/purchase history
         # Falls back to trending/popular products for new users
         from recommendations import get_personalized_recommendations
-        return get_personalized_recommendations(user_id, limit)
+        products = get_personalized_recommendations(user_id, limit)
+        return [ProductType.from_db(p) for p in products]
+    
+    @strawberry.field
+    def reviews(self, product_id: int, limit: int = 20, offset: int = 0) -> List[ReviewType]:
+        # Get reviews for a specific product with pagination
+        reviews = (
+            session.query(Review)
+            .filter(Review.product_id == product_id)
+            .order_by(Review.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+        return [ReviewType.from_db(r) for r in reviews]
+    
+    @strawberry.field
+    def review_stats(self, product_id: int) -> ReviewStatsType:
+        # Get review statistics for a product (rating distribution)
+        stats = {
+            1: 0,
+            2: 0,
+            3: 0,
+            4: 0,
+            5: 0
+        }
+        
+        reviews = session.query(Review.rating).filter(Review.product_id == product_id).all()
+        for (rating,) in reviews:
+            stats[rating] = stats.get(rating, 0) + 1
+        
+        return ReviewStatsType(
+            rating1=stats[1],
+            rating2=stats[2],
+            rating3=stats[3],
+            rating4=stats[4],
+            rating5=stats[5]
+        )
 
 # Mutations - Write operations
 
@@ -492,5 +598,74 @@ class Mutation:
         
         session.commit()
         return OrderType.from_db(cart)
+    
+    @strawberry.mutation
+    def submit_review(
+        self,
+        product_id: int,
+        user_id: int,
+        rating: int,
+        title: Optional[str] = None,
+        comment: Optional[str] = None
+    ) -> ReviewType:
+        # Submit or update a review for a product
+        # Check if user already reviewed this product
+        existing_review = session.query(Review).filter(
+            Review.product_id == product_id,
+            Review.user_id == user_id
+        ).first()
+        
+        # Validate rating
+        if rating < 1 or rating > 5:
+            raise Exception("Rating must be between 1 and 5")
+        
+        # Check if user purchased this product (verified purchase)
+        verified_purchase = session.query(OrderItem).join(Order).filter(
+            OrderItem.product_id == product_id,
+            Order.user_id == user_id,
+            Order.status != "cart"
+        ).first() is not None
+        
+        if existing_review:
+            # Update existing review
+            existing_review.rating = rating
+            existing_review.title = title
+            existing_review.comment = comment
+            existing_review.updated_at = datetime.utcnow()
+            session.commit()
+            review = existing_review
+        else:
+            # Create new review
+            review = Review(
+                product_id=product_id,
+                user_id=user_id,
+                rating=rating,
+                title=title,
+                comment=comment,
+                verified_purchase=1 if verified_purchase else 0
+            )
+            session.add(review)
+            session.commit()
+        
+        # Recalculate product rating average and count
+        all_reviews = session.query(Review).filter(Review.product_id == product_id).all()
+        product = session.query(Product).get(product_id)
+        if product:
+            product.rating_count = len(all_reviews)
+            product.rating_avg = sum(r.rating for r in all_reviews) / len(all_reviews) if all_reviews else 0.0
+            session.commit()
+        
+        return ReviewType.from_db(review)
+    
+    @strawberry.mutation
+    def mark_review_helpful(self, review_id: int) -> ReviewType:
+        # Mark a review as helpful (increment helpful_count)
+        review = session.query(Review).get(review_id)
+        if not review:
+            raise Exception("Review not found")
+        
+        review.helpful_count += 1
+        session.commit()
+        return ReviewType.from_db(review)
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

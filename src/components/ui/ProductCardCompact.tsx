@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type React from 'react';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
+import ProductPrice from '@/components/ui/ProductPrice';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
 import { getProductImageUrl } from '@/utils/colorUtils';
@@ -106,9 +107,7 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
                 {name}
               </h3>
             </div>
-            <p className="text-xs font-bold text-gray-900 leading-tight whitespace-nowrap">
-              ${price}
-            </p>
+            <ProductPrice price={price} className="text-xs leading-tight whitespace-nowrap" />
           </div>
         </div>
       </div>

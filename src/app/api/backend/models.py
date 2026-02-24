@@ -105,6 +105,22 @@ class OrderItem(Base):
     variant = relationship("Variant")
     #There's a relation of many order items to one order
 
+class Review(Base):
+    __tablename__ = "reviews"
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    rating = Column(Integer, nullable=False)  # 1-5 stars
+    title = Column(String, nullable=True)  # Optional review title
+    comment = Column(String, nullable=True)  # Review text
+    verified_purchase = Column(Integer, default=0)  # 1 if user bought the product, 0 otherwise
+    helpful_count = Column(Integer, default=0)  # Number of "helpful" votes
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    product = relationship("Product")
+    user = relationship("User")
+    #There's a relation of many reviews to one product and one user
+
 # DB setup
 engine = create_engine("sqlite:///products.db")
 Session = sessionmaker(bind=engine)

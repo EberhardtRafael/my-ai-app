@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import ReviewsSection from '@/components/ReviewsSection';
 import SidePanel from '@/components/SidePanel';
 import InfoMessage from '@/components/ui/InfoMessage';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -33,27 +34,44 @@ export default function PDPPage({ params }: PDPPageProps) {
   // Fetch product data
   useEffect(() => {
     if (!id) return;
-
-    const fetchProduct = async () => {
-      const productQuery = `{ product(id: ${id}) { id name price category variants { id sku color size stock } } }`;
-      const productResponse = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: productQuery }),
-      });
-      const productResult = await productResponse.json();
-      const fetchedProduct = productResult?.data?.product;
-      setProduct(fetchedProduct);
-
-      // Set initial color and size to first variant's values
-      if (fetchedProduct?.variants?.[0]) {
-        setSelectedColor(fetchedProduct.variants[0].color);
-        setSelectedSize(fetchedProduct.variants[0].size);
-      }
-    };
-
     fetchProduct();
   }, [id]);
+
+  const fetchProduct = async () => {
+    const productQuery = `{ product(id: ${id}) { 
+      id name price category 
+      ratingAvg ratingCount 
+      variants { id sku color size stock } 
+    } }`;
+    const productResponse = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: productQuery }),
+    });
+    const productResult = await productResponse.json();
+    const fetchedProduct = productResult?.data?.product;
+    
+    // Fetch reviews separately
+    const reviewsQuery = `{ reviews(productId: ${id}, limit: 20) { 
+      id productId userId username rating title comment 
+      verifiedPurchase helpfulCount createdAt updatedAt 
+    } }`;
+    const reviewsResponse = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: reviewsQuery }),
+    });
+    const reviewsResult = await reviewsResponse.json();
+    const reviews = reviewsResult?.data?.reviews || [];
+    
+    setProduct({ ...fetchedProduct, reviews });
+
+    // Set initial color and size to first variant's values
+    if (fetchedProduct?.variants?.[0]) {
+      setSelectedColor(fetchedProduct.variants[0].color);
+      setSelectedSize(fetchedProduct.variants[0].size);
+    }
+  };
 
   // Check if product is favorited
   useEffect(() => {
@@ -140,6 +158,18 @@ export default function PDPPage({ params }: PDPPageProps) {
           <InfoMessage message="Related products grid will appear here" variant="muted" />
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {product && (
+        <ReviewsSection
+          productId={parseInt(id || '0')}
+          userId={userId ? parseInt(userId) : undefined}
+          ratingAvg={product.ratingAvg || 0}
+          ratingCount={product.ratingCount || 0}
+          reviews={product.reviews || []}
+          onReviewSubmitted={fetchProduct}
+        />
+      )}
     </main>
   );
 }
