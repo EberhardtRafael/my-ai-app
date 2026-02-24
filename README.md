@@ -150,33 +150,33 @@ yarn test:all          # Both frontend and backend
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         User Browser                             │
-│                     http://localhost:3000                        │
+│                         User Browser                            │
+│                     http://localhost:3000                       │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Next.js Frontend (Port 3000)                  │
+┌────────────────────────────────────────────────────────────────┐
+│                    Next.js Frontend (Port 3000)                │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  App Router (Next.js 15)                                 │  │
-│  │  - /              → Personalized "For You"              │  │
+│  │  - /              → Personalized "For You"               │  │
 │  │  - /plp           → Product Listing                      │  │
-│  │  - /pdp/:id       → Product Details + Reviews           │  │
-│  │  - /cart          → Cart + Recommendations              │  │
-│  │  - /tickets       → AI Ticket Generator                 │  │
+│  │  - /pdp/:id       → Product Details + Reviews            │  │
+│  │  - /cart          → Cart + Recommendations               │  │
+│  │  - /tickets       → AI Ticket Generator                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  Context Providers                                       │  │
-│  │  - CartContext    → Global cart state                   │  │
-│  │  - FavoritesContext → Wishlist management               │  │
-│  │  - SessionWrapper → NextAuth integration                │  │
+│  │  - CartContext    → Global cart state                    │  │
+│  │  - FavoritesContext → Wishlist management                │  │
+│  │  - SessionWrapper → NextAuth integration                 │  │
 │  └──────────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────────┘
+└────────────────────────────┬───────────────────────────────────┘
                              │
                              │ GraphQL/REST
                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Python Flask Backend (Port 8000)               │
+┌────────────────────────────────────────────────────────────────┐
+│                   Python Flask Backend (Port 8000)             │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  GraphQL API (Strawberry)                                │  │
 │  │  - /graphql       → Main API endpoint                    │  │
@@ -201,9 +201,9 @@ yarn test:all          # Both frontend and backend
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  AI Ticket Generator                                     │  │
-│  │  - GitHub API client with caching                       │  │
-│  │  - ML-based time estimation                             │  │
-│  │  - Similarity matching for historical tasks             │  │
+│  │  - GitHub API client with caching                        │  │
+│  │  - ML-based time estimation                              │  │
+│  │  - Similarity matching for historical tasks              │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  Database Layer (SQLite)                                 │  │
@@ -212,7 +212,7 @@ yarn test:all          # Both frontend and backend
 │  │  - Orders & Cart Items                                   │  │
 │  │  - Reviews & Ratings                                     │  │
 │  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
                              │
                              ▼
                     ┌────────────────────┐
