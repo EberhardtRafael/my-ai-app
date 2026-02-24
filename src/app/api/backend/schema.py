@@ -28,6 +28,15 @@ class ProductType:
     name: str
     category: str
     price: float
+    description: Optional[str]
+    brand: Optional[str]
+    material: Optional[str]
+    tags: Optional[str]
+    rating_avg: float
+    rating_count: int
+    sales_count: int
+    image_url: Optional[str]
+    created_at: str
     variants: List[VariantType]
 
 @strawberry.type
@@ -246,6 +255,52 @@ class Query:
         # Uses collaborative filtering to suggest products based on purchase patterns
         from recommendations import get_cart_recommendations
         return get_cart_recommendations(user_id, limit)
+    
+    @strawberry.field
+    def trending(self, hours: int = 48, limit: int = 10) -> List[ProductType]:
+        """
+        Get trending products based on cart additions in the last N hours
+        Simple COUNT query showing social proof of "hot items everyone's buying"
+        """
+        from datetime import timedelta
+        from sqlalchemy import func
+        
+        # Calculate cutoff time
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Query: Count cart additions per product in the time window
+        trending_query = (
+            session.query(
+                OrderItem.product_id,
+                func.count(OrderItem.id).label('add_count')
+            )
+            .join(Order)
+            .filter(
+                OrderItem.added_at >= cutoff_time,
+                Order.status == "cart"  # Only count items still in carts
+            )
+            .group_by(OrderItem.product_id)
+            .order_by(func.count(OrderItem.id).desc())
+            .limit(limit)
+        )
+        
+        # Get product IDs and their counts
+        trending_products = trending_query.all()
+        
+        if not trending_products:
+            return []
+        
+        # Fetch full product details
+        product_ids = [p.product_id for p in trending_products]
+        products = session.query(Product).filter(Product.id.in_(product_ids)).all()
+        
+        # Sort products by their trending count
+        product_map = {p.id: p for p in products}
+        sorted_products = [
+            product_map[pid] for pid, _ in trending_products if pid in product_map
+        ]
+        
+        return sorted_products
     
     @strawberry.field
     def personalized_recommendations(self, user_id: int, limit: int = 8) -> List[ProductType]:

@@ -6,11 +6,15 @@ export async function POST(req: Request) {
   try {
     const { query, variables } = await req.json();
 
-    // Validate that this is a products or recommendations query
+    // Validate that this is a products, recommendations, or trending query
     const queryLower = query.toLowerCase();
-    if (!queryLower.includes('product') && !queryLower.includes('recommendation')) {
+    if (
+      !queryLower.includes('product') &&
+      !queryLower.includes('recommendation') &&
+      !queryLower.includes('trending')
+    ) {
       return NextResponse.json(
-        { error: 'This endpoint only handles product and recommendation operations' },
+        { error: 'This endpoint only handles product, recommendation, and trending operations' },
         { status: 400 }
       );
     }
