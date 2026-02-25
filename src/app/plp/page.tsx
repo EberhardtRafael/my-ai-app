@@ -56,13 +56,7 @@ export default async function ProductPage({ searchParams }: ProductPageProps) {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <Breadcrumb
-        className="mb-3"
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Products' },
-        ]}
-      />
+      <Breadcrumb className="mb-3" items={[{ label: 'Home', href: '/' }, { label: 'Products' }]} />
       <PageHeader title={plpTitleText} />
       <ProductList
         initialProducts={products}

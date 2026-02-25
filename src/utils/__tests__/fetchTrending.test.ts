@@ -42,7 +42,7 @@ describe('fetchTrending', () => {
     expect(callArgs[0]).toBe('/api/products');
     expect(callArgs[1].method).toBe('POST');
     expect(callArgs[1].headers).toEqual({ 'Content-Type': 'application/json' });
-    
+
     const body = JSON.parse(callArgs[1].body);
     expect(body.query).toContain('trending');
     expect(body.variables).toEqual({ hours: 48, limit: 10 });
@@ -76,7 +76,7 @@ describe('fetchTrending', () => {
     const callArgs = (global.fetch as jest.Mock).mock.calls[0];
     expect(callArgs[0]).toBe('/api/products');
     expect(callArgs[1].method).toBe('POST');
-    
+
     const body = JSON.parse(callArgs[1].body);
     expect(body.query).toContain('trending');
     expect(body.variables).toEqual({ hours: 24, limit: 5 });
@@ -105,7 +105,9 @@ describe('fetchTrending', () => {
       statusText: 'Internal Server Error',
     });
 
-    await expect(fetchTrending()).rejects.toThrow('Failed to fetch trending products: Internal Server Error');
+    await expect(fetchTrending()).rejects.toThrow(
+      'Failed to fetch trending products: Internal Server Error'
+    );
   });
 
   it('should throw error when GraphQL returns errors', async () => {

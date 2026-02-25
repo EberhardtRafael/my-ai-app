@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import Button from '@/components/ui/Button';
 
 export type AssistantActionListItem = {

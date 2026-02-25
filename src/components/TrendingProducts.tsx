@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { Product } from '@/utils/fetchProducts';
 import { fetchTrending } from '@/utils/fetchTrending';
+import TrendingErrorState from './TrendingErrorState';
+import TrendingLoadingState from './TrendingLoadingState';
 import Carousel from './ui/Carousel';
 import ProductCardCompact from './ui/ProductCardCompact';
 import SectionHeader from './ui/SectionHeader';
@@ -42,42 +44,13 @@ export default function TrendingProducts({
     loadTrending();
   }, [hours, limit]);
 
-  if (loading) {
-    return (
-      <section className="py-8">
-        <SectionHeader
-          title="Trending Now"
-          subtitle={`Popular items in the last ${hours} hours`}
-        />
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900" />
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="py-8">
-        <SectionHeader
-          title="Trending Now"
-          subtitle={`Popular items in the last ${hours} hours`}
-        />
-        <div className="text-center py-8 text-red-600">{error}</div>
-      </section>
-    );
-  }
-
-  if (products.length === 0) {
-    return null; // Don't show section if no trending products
-  }
+  if (loading) return <TrendingLoadingState hours={hours} />;
+  if (error) return <TrendingErrorState hours={hours} error={error} />;
+  if (products.length === 0) return null;
 
   return (
     <section className="py-8">
-      <SectionHeader
-        title="Trending Now"
-        subtitle={`Popular items in the last ${hours} hours`}
-      />
+      <SectionHeader title="Trending Now" subtitle={`Popular items in the last ${hours} hours`} />
       <Carousel itemsPerView={5} gap={12}>
         {products.map((product) => {
           const firstColor = product.variants?.[0]?.color;

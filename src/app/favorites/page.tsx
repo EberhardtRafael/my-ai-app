@@ -1,14 +1,15 @@
 import { getServerSession } from 'next-auth';
 import ProductGrid from '@/components/ProductGrid';
 import InfoMessage from '@/components/ui/InfoMessage';
+import PageHeader from '@/components/ui/PageHeader';
 import { fetchFavorites } from '@/utils/fetchFavorites';
 import { authOptions } from '../api/auth/[...nextauth]/route';
-import PageHeader from '@/components/ui/PageHeader';
 
 export default async function FavoritesPage() {
   const session = await getServerSession(authOptions);
+  const isAuthenticated = !!session?.user;
 
-  if (!session?.user) {
+  if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-gray-50 p-6">
         <PageHeader title="My Favorites" />
@@ -29,7 +30,6 @@ export default async function FavoritesPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <PageHeader title="My Favorites" />
-
       <ProductGrid
         products={favorites.map((fav) => fav.product)}
         emptyMessage="You haven't added any favorites yet."

@@ -12,10 +12,7 @@ const PlpSearchStateContext = createContext<PlpSearchStateContextValue | undefin
 export function PlpSearchStateProvider({ children }: { children: React.ReactNode }) {
   const [hasPendingSearch, setHasPendingSearch] = useState(false);
 
-  const value = useMemo(
-    () => ({ hasPendingSearch, setHasPendingSearch }),
-    [hasPendingSearch]
-  );
+  const value = useMemo(() => ({ hasPendingSearch, setHasPendingSearch }), [hasPendingSearch]);
 
   return <PlpSearchStateContext.Provider value={value}>{children}</PlpSearchStateContext.Provider>;
 }

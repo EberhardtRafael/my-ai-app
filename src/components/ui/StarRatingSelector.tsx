@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import Button from './Button';
 import Icon from '@/components/ui/Icon';
+import Button from './Button';
 
 type StarRatingSelectorProps = {
   value: number;
@@ -8,10 +8,10 @@ type StarRatingSelectorProps = {
   className?: string;
 };
 
-export default function StarRatingSelector({ 
-  value, 
+export default function StarRatingSelector({
+  value,
   onChange,
-  className = '' 
+  className = '',
 }: StarRatingSelectorProps) {
   const [hoveredRating, setHoveredRating] = useState(0);
 

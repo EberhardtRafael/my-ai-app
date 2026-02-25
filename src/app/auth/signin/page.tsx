@@ -5,8 +5,8 @@ import { signIn } from 'next-auth/react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Icon from '@/components/ui/Icon';
+import Input from '@/components/ui/Input';
 
 const LoginPage = () => {
   const signInText = 'Sign In';

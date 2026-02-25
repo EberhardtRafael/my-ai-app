@@ -4,9 +4,9 @@ import Link from 'next/link';
 import type React from 'react';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
+import Icon from '@/components/ui/Icon';
 import ProductPrice from '@/components/ui/ProductPrice';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import Icon from '@/components/ui/Icon';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
 type ProductCardCompactProps = {

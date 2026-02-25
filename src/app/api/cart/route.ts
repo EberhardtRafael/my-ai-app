@@ -8,7 +8,14 @@ export async function POST(req: Request) {
     const { query, variables } = body;
 
     // Validate that this is a cart-related query or mutation
-    if (!query.includes('cart') && !query.includes('Cart') && !query.includes('addToCart') && !query.includes('updateCartItem') && !query.includes('removeFromCart') && !query.includes('clearCart')) {
+    if (
+      !query.includes('cart') &&
+      !query.includes('Cart') &&
+      !query.includes('addToCart') &&
+      !query.includes('updateCartItem') &&
+      !query.includes('removeFromCart') &&
+      !query.includes('clearCart')
+    ) {
       return NextResponse.json(
         { error: 'This endpoint only handles cart operations' },
         { status: 400 }

@@ -2,11 +2,13 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import LoadingState from '@/components/LoadingState';
 import ReviewsSection from '@/components/ReviewsSection';
 import SidePanel from '@/components/SidePanel';
 import InfoMessage from '@/components/ui/InfoMessage';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
+import { getSizeLabel } from '@/utils/productUtils';
 
 type PDPPageProps = {
   params: Promise<{ id: string }> | { id: string };
@@ -50,7 +52,7 @@ export default function PDPPage({ params }: PDPPageProps) {
     });
     const productResult = await productResponse.json();
     const fetchedProduct = productResult?.data?.product;
-    
+
     // Fetch reviews separately
     const reviewsQuery = `{ reviews(productId: ${id}, limit: 20) { 
       id productId userId username rating title comment 
@@ -63,7 +65,7 @@ export default function PDPPage({ params }: PDPPageProps) {
     });
     const reviewsResult = await reviewsResponse.json();
     const reviews = reviewsResult?.data?.reviews || [];
-    
+
     setProduct({ ...fetchedProduct, reviews });
 
     // Set initial color and size to first variant's values
@@ -97,23 +99,8 @@ export default function PDPPage({ params }: PDPPageProps) {
   }, [userId, id, favoritesCount]);
 
   if (!id || !product) {
-    return (
-      <main className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    );
+    return <LoadingState />;
   }
-
-  const getSizeLabel = () => {
-    if (!selectedSize) return '';
-    const sizeMap: Record<string, string> = {
-      S: 'Small',
-      M: 'Medium',
-      L: 'Large',
-      XL: 'Extra Large',
-    };
-    return sizeMap[selectedSize] || selectedSize;
-  };
 
   return (
     <main className="min-h-screen bg-gray-50 p-4">
@@ -129,7 +116,7 @@ export default function PDPPage({ params }: PDPPageProps) {
             />
             {selectedSize && (
               <div className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded">
-                <span className="text-lg font-semibold">Size: {getSizeLabel()}</span>
+                <span className="text-lg font-semibold">Size: {getSizeLabel(selectedSize)}</span>
               </div>
             )}
           </div>
@@ -162,8 +149,8 @@ export default function PDPPage({ params }: PDPPageProps) {
       {/* Reviews Section */}
       {product && (
         <ReviewsSection
-          productId={parseInt(id || '0')}
-          userId={userId ? parseInt(userId) : undefined}
+          productId={parseInt(id || '0', 10)}
+          userId={userId ? parseInt(userId, 10) : undefined}
           ratingAvg={product.ratingAvg || 0}
           ratingCount={product.ratingCount || 0}
           reviews={product.reviews || []}

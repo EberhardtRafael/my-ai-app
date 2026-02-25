@@ -6,10 +6,7 @@ type ClearFiltersButtonProps = {
   className?: string;
 };
 
-export default function ClearFiltersButton({
-  onClear,
-  className = '',
-}: ClearFiltersButtonProps) {
+export default function ClearFiltersButton({ onClear, className = '' }: ClearFiltersButtonProps) {
   return (
     <Button
       type="button"

@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Carousel from '@/components/ui/Carousel';
 import EmptyState from '@/components/ui/EmptyState';
+import Icon from '@/components/ui/Icon';
 import OrderSummary from '@/components/ui/OrderSummary';
 import PageShell from '@/components/ui/PageShell';
 import ProductCardCompact from '@/components/ui/ProductCardCompact';
@@ -15,7 +16,6 @@ import Toast from '@/components/ui/Toast';
 import { useToast } from '@/components/ui/useToast';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import Icon from '@/components/ui/Icon';
 import {
   type CartItem,
   clearCart,
@@ -193,6 +193,8 @@ export default function CartPage() {
     </Button>
   );
 
+  const showEmptyState = cartItems.length === 0;
+
   return (
     <PageShell
       title="Shopping Cart"
@@ -201,7 +203,7 @@ export default function CartPage() {
       loading={loading}
       headerAction={clearCartAction}
     >
-      {cartItems.length === 0 ? (
+      {showEmptyState ? (
         <EmptyState
           title="Your Shopping Cart is Empty"
           message="Start shopping to add items to your cart."

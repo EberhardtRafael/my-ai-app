@@ -15,7 +15,11 @@ type DeliveryBenchmark = {
 
 const formatHours = (hours: number) => `${Number(hours || 0).toFixed(1)}h`;
 
-export default function TicketAnalyticsOverview({ ticketStats }: { ticketStats: TicketStats | null }) {
+export default function TicketAnalyticsOverview({
+  ticketStats,
+}: {
+  ticketStats: TicketStats | null;
+}) {
   const analyticsStats: AnalyticsStat[] = ticketStats
     ? [
         {

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 type InfoMessageProps = {
   message: string;
   linkText?: string;
@@ -21,9 +23,9 @@ const InfoMessage: React.FC<InfoMessageProps> = ({
       {linkText && linkHref && (
         <>
           {' '}
-          <a href={linkHref} className="text-blue-600 hover:text-blue-800 font-medium">
+          <Link href={linkHref} className="text-blue-600 hover:text-blue-800 font-medium">
             {linkText}
-          </a>
+          </Link>
         </>
       )}
     </p>
