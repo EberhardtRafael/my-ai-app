@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { submitReview } from '@/utils/fetchReviews';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -16,6 +17,7 @@ type ReviewFormProps = {
 };
 
 export default function ReviewForm({ productId, userId, onReviewSubmitted }: ReviewFormProps) {
+  const { t } = useLocalization();
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState('');
   const [comment, setComment] = useState('');
@@ -26,7 +28,7 @@ export default function ReviewForm({ productId, userId, onReviewSubmitted }: Rev
     e.preventDefault();
 
     if (rating < 1 || rating > 5) {
-      setError('Please select a rating');
+      setError(t('reviews.selectRatingError'));
       return;
     }
 
@@ -43,45 +45,45 @@ export default function ReviewForm({ productId, userId, onReviewSubmitted }: Rev
       onReviewSubmitted();
     } catch (err) {
       console.error('Error submitting review:', err);
-      setError(err instanceof Error ? err.message : 'Failed to submit review');
+      setError(err instanceof Error ? err.message : t('reviews.submitError'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card header={<h3 className="text-lg font-semibold">Write a Review</h3>}>
+    <Card header={<h3 className="text-lg font-semibold">{t('reviews.writeReview')}</h3>}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Star Rating */}
         <div>
-          <span className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</span>
+          <span className="block text-sm font-medium text-gray-700 mb-2">{t('reviews.yourRating')}</span>
           <StarRatingSelector value={rating} onChange={setRating} />
         </div>
 
         {/* Title */}
         <Input
           id="review-title"
-          label="Review Title"
+          label={t('reviews.reviewTitle')}
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Sum up your experience"
+          placeholder={t('reviews.reviewTitlePlaceholder')}
         />
 
         {/* Comment */}
         <Textarea
           id="review-comment"
-          label="Your Review"
+          label={t('reviews.yourReview')}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Tell us more about your experience..."
+          placeholder={t('reviews.yourReviewPlaceholder')}
           rows={4}
         />
 
         {error && <ErrorMessage message={error} />}
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Submitting...' : 'Submit Review'}
+          {loading ? t('reviews.submitting') : t('reviews.submitReview')}
         </Button>
       </form>
     </Card>

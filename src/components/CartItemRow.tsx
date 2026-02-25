@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
 import type { CartItem } from '@/utils/fetchCart';
 import Badge from './ui/Badge';
@@ -16,6 +17,7 @@ type CartItemProps = {
 };
 
 const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartItemProps) => {
+  const { t } = useLocalization();
   const lowStock = item.variant.stock < 5;
   const outOfStock = item.variant.stock === 0;
   const stockDisplay = item.variant.stock > 10 ? '10+' : item.variant.stock.toString();
@@ -44,16 +46,19 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
         </Link>
         <div className="flex items-center gap-2 mt-1">
           <p className="text-sm text-gray-600">
-            Color: {item.variant.color} | Size: {item.variant.size}
+            {t('cart.colorLabel')}: {item.variant.color} | {t('cart.sizeLabel')}:{' '}
+            {item.variant.size}
           </p>
           {!outOfStock && (
-            <Badge variant={lowStock ? 'warning' : 'success'}>Stock: {stockDisplay}</Badge>
+            <Badge variant={lowStock ? 'warning' : 'success'}>
+              {t('cart.stockLabel')}: {stockDisplay}
+            </Badge>
           )}
-          {outOfStock && <Badge variant="error">Out of stock</Badge>}
+          {outOfStock && <Badge variant="error">{t('cart.outOfStock')}</Badge>}
         </div>
         {lowStock && !outOfStock && (
           <p className="text-sm text-yellow-700 font-light mt-1">
-            Only {item.variant.stock} left in stock
+            {t('cart.onlyLeftInStock', { count: item.variant.stock })}
           </p>
         )}
         <ProductPrice price={item.product.price.toFixed(2)} className="mt-2" />
@@ -73,7 +78,7 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
               onClick={() => onSaveForLater(item)}
               className="text-xs font-light py-1 px-3"
             >
-              Save for Later
+              {t('cart.saveForLater')}
             </Button>
           )}
         </div>
@@ -82,7 +87,7 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
           onClick={() => onRemove(item.id)}
           variant="ghost"
           className="h-7 w-7 p-0 hover:bg-gray-200"
-          aria-label="Remove item"
+          aria-label={t('cart.removeItem')}
         >
           <Icon name="trash" size={16} />
         </Button>

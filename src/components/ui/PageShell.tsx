@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import InfoMessage from './InfoMessage';
 
 type PageShellProps = {
@@ -18,6 +19,8 @@ const PageShell: React.FC<PageShellProps> = ({
   children,
   headerAction,
 }) => {
+  const { t } = useLocalization();
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
@@ -28,12 +31,12 @@ const PageShell: React.FC<PageShellProps> = ({
 
         {requireAuth && !isAuthenticated ? (
           <InfoMessage
-            message="Please sign in to view this page."
-            linkText="Sign in here"
+            message={t('pageShell.authRequired')}
+            linkText={t('pageShell.signInHere')}
             linkHref="/auth/signin"
           />
         ) : loading ? (
-          <p>Loading...</p>
+          <p>{t('common.loading')}</p>
         ) : (
           children
         )}

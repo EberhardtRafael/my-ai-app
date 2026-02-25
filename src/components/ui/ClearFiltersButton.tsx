@@ -1,5 +1,6 @@
 import Button from './Button';
 import Icon from './Icon';
+import { useLocalization } from '@/contexts/LocalizationContext';
 
 type ClearFiltersButtonProps = {
   onClear: () => void;
@@ -7,6 +8,8 @@ type ClearFiltersButtonProps = {
 };
 
 export default function ClearFiltersButton({ onClear, className = '' }: ClearFiltersButtonProps) {
+  const { t } = useLocalization();
+
   return (
     <Button
       type="button"
@@ -15,7 +18,7 @@ export default function ClearFiltersButton({ onClear, className = '' }: ClearFil
       onClick={onClear}
     >
       <Icon name="plus" size={16} className="rotate-45" />
-      Clear all filters
+      {t('plp.clearAllFilters')}
     </Button>
   );
 }

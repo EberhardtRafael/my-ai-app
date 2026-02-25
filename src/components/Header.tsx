@@ -6,8 +6,10 @@ import { signOut, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
+import { JSON_HEADERS } from '@/constants/http';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { usePlpSearchState } from '@/contexts/PlpSearchStateContext';
 import Dropdown from './ui/Dropdown';
 import SearchBox from './ui/SearchBox';
@@ -20,10 +22,8 @@ export default function Header() {
   const { favoritesCount, setFavoritesCount } = useFavorites();
   const { cartItemsCount, setCartItemsCount } = useCart();
   const { setHasPendingSearch } = usePlpSearchState();
+  const { t } = useLocalization();
   const toast = useToast();
-  const homeText = 'Home';
-  const productsText = 'Products';
-  const searchPlaceholder = 'Search product by name or property';
 
   const pathname = usePathname();
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function Header() {
       const query = `{ favorites(userId: ${session.user.id}, activeOnly: true) { id } }`;
       const response = await fetch('/api/favorites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query }),
       });
       const result = await response.json();
@@ -84,7 +84,7 @@ export default function Header() {
 
       const response = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query, variables: { userId: parseInt(session.user.id, 10) } }),
       });
       const result = await response.json();
@@ -117,10 +117,10 @@ export default function Header() {
   const dropdownItems = [
     {
       label: 'Profile',
-      onClick: () => toast.info('Coming Soon', 'Profile page coming soon!'),
+      onClick: () => toast.info(t('common.comingSoonTitle'), t('common.comingSoonProfile')),
     },
     {
-      label: 'Sign Out',
+      label: t('common.signOut'),
       onClick: () => signOut(),
     },
   ];
@@ -131,15 +131,15 @@ export default function Header() {
         {/* Left Region */}
         <nav className="flex gap-4 items-center">
           <Link href="/">
-            <Button disabled={pathname === '/'}>{homeText}</Button>
+            <Button disabled={pathname === '/'}>{t('common.home')}</Button>
           </Link>
           <Link href="/plp">
-            <Button disabled={pathname === '/plp'}>{productsText}</Button>
+            <Button disabled={pathname === '/plp'}>{t('common.products')}</Button>
           </Link>
           <Link href="/favorites">
             <Button className="flex items-center gap-2 relative">
               <Icon name="heart" size={16} />
-              <span>Favorites</span>
+              <span>{t('common.favorites')}</span>
               {favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {favoritesCount}
@@ -150,16 +150,16 @@ export default function Header() {
           {session && (
             <>
               <Link href="/orders">
-                <Button disabled={pathname === '/orders'}>Orders</Button>
+                <Button disabled={pathname === '/orders'}>{t('common.orders')}</Button>
               </Link>
               <Link href="/assistant">
-                <Button disabled={pathname === '/assistant'}>Assistant</Button>
+                <Button disabled={pathname === '/assistant'}>{t('common.assistant')}</Button>
               </Link>
               <Link href="/tickets">
                 <Button disabled={pathname === '/tickets'}>
                   <span className="flex items-center gap-2">
                     <Icon name="document-text" size={16} />
-                    Tickets
+                    {t('common.tickets')}
                   </span>
                 </Button>
               </Link>
@@ -171,19 +171,19 @@ export default function Header() {
         <div className="flex items-center gap-4 ml-auto">
           <SearchBox
             value={searchValue}
-            placeholder={searchPlaceholder}
+            placeholder={t('header.searchPlaceholder')}
             onChange={onSearchChange}
             onSearch={onSearch}
           />
           {session && (
             <>
               <Link href="/cart">
-                <Tooltip text="Shopping Cart">
+                <Tooltip text={t('header.shoppingCartTooltip')}>
                   <Button
                     type="button"
                     variant="ghost"
                     className="p-2 hover:text-gray-500 transition-colors relative"
-                    aria-label="Cart"
+                    aria-label={t('header.cartAriaLabel')}
                   >
                     <Icon name="cart" size={24} />
                     {cartItemsCount > 0 && (

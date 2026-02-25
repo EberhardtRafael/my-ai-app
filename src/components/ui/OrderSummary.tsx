@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useLocalization } from '@/contexts/LocalizationContext';
 
 type OrderSummaryLine = {
   label: string;
@@ -15,23 +16,26 @@ type OrderSummaryProps = {
 };
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({ subtotal, shipping, tax, itemCount }) => {
+  const { t } = useLocalization();
   const total = subtotal + shipping + tax;
 
   const lines: OrderSummaryLine[] = [
     {
-      label: itemCount ? `Subtotal (${itemCount} items)` : 'Subtotal',
+      label: itemCount
+        ? t('orderSummary.subtotalWithCount', { count: itemCount })
+        : t('orderSummary.subtotal'),
       value: `$${subtotal.toFixed(2)}`,
     },
     {
-      label: 'Shipping',
-      value: shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`,
+      label: t('orderSummary.shipping'),
+      value: shipping === 0 ? t('orderSummary.freeShipping') : `$${shipping.toFixed(2)}`,
     },
     {
-      label: 'Tax (10%)',
+      label: t('orderSummary.tax'),
       value: `$${tax.toFixed(2)}`,
     },
     {
-      label: 'Total',
+      label: t('orderSummary.total'),
       value: `$${total.toFixed(2)}`,
       isBold: true,
       hasBorder: true,
