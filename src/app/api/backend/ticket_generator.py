@@ -2,7 +2,8 @@
 LLM-powered ticket generator
 """
 import os
-from typing import Dict, Optional
+import re
+from typing import Dict, Optional, List
 from datetime import datetime
 
 # You can use OpenAI or Anthropic - here's the structure for both
@@ -77,6 +78,14 @@ Format in markdown with proper headers and checkboxes."""
         # Extract a title from description
         title = self._extract_title(task_description)
         ticket_id = self._generate_ticket_id()
+        acceptance_criteria = self._extract_acceptance_criteria(task_description)
+        risk_section = self._build_risk_section(task_description)
+        related_components = self._extract_related_components(task_description)
+        dependencies = self._extract_dependencies(task_description)
+        implementation_plan = self._build_implementation_plan(task_description, context)
+        testing_requirements = self._build_testing_requirements(task_description, context)
+        priority = self._determine_priority(task_description, estimation)
+        definition_of_done = self._build_definition_of_done(task_description, context)
         
         similar_section = ""
         if similar_tasks:
@@ -94,15 +103,15 @@ Format in markdown with proper headers and checkboxes."""
 
 **Factors:**
 - Base hours ({context}): {factors.get('base_hours', 0)}h
-- Complexity multiplier: {factors.get('complexity_multiplier', 1.0)}x
-- Scope multiplier: {factors.get('scope_multiplier', 1.0)}x
-- Historical adjustment: {factors.get('history_adjustment', 1.0)}x
+- Complexity adjustment: {factors.get('complexity_adjustment', 1.0)}x
+- Scope adjustment: {factors.get('scope_adjustment', 1.0)}x
+- Estimation method: {factors.get('method', 'fallback')}
 """
         
         ticket = f"""# {ticket_id}: {title}
 
 **Status:** 📝 Planned  
-**Priority:** P2  
+    **Priority:** {priority}  
 **Estimated:** {estimation['hours']}h ({estimation['confidence']*100:.0f}% confidence)  
 **Context:** {context.title()}  
 **Created:** {datetime.now().strftime('%Y-%m-%d')}
@@ -119,25 +128,14 @@ So that the application has improved functionality and user experience.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working
-- [ ] Code follows project conventions and best practices
-- [ ] Unit tests written with >80% coverage
-- [ ] Integration tests pass
-- [ ] Documentation updated (README, inline comments)
-- [ ] Code reviewed and approved
-- [ ] No console errors or warnings
-- [ ] Performance benchmarks met
+{acceptance_criteria}
 
 ## Technical Notes
 
 **Context:** {context.title()} development
 
 **Recommended Approach:**
-1. Review existing similar implementations
-2. Plan component/module structure
-3. Implement core logic with tests
-4. Add error handling and edge cases
-5. Optimize and document
+{implementation_plan}
 
 **Considerations:**
 - Maintain backward compatibility
@@ -145,41 +143,252 @@ So that the application has improved functionality and user experience.
 - Consider performance implications
 - Ensure accessibility standards
 
+## Related Components
+
+{related_components}
+
+## Dependencies
+
+{dependencies}
+
+{risk_section}
+
 {estimation_breakdown}{similar_section}
 
 ## Testing Requirements
 
-- [ ] Unit tests for all new functions/components
-- [ ] Integration tests for API endpoints (if applicable)
-- [ ] Manual testing across different scenarios
-- [ ] Edge case testing
-- [ ] Performance testing (if applicable)
+{testing_requirements}
 
 ## Definition of Done
 
-- [ ] All acceptance criteria met
-- [ ] Tests passing (unit + integration)
-- [ ] Code reviewed and approved
-- [ ] Documentation complete
-- [ ] Deployed to staging and verified
-- [ ] No regressions in existing functionality
+{definition_of_done}
 
 ---
 
 **Note:** This ticket was generated automatically based on repository history and task analysis. Adjust estimation and details as needed based on team knowledge.
 """
         return ticket
+
+    def _extract_acceptance_criteria(self, description: str) -> str:
+        """Create task-specific acceptance criteria from description text"""
+        segments = [segment.strip() for segment in re.split(r'[\n\.;]+', description) if segment.strip()]
+        criteria: List[str] = []
+
+        for segment in segments:
+            normalized = segment[0].upper() + segment[1:] if segment else segment
+            lowered = normalized.lower()
+
+            if len(normalized) < 8:
+                continue
+
+            if any(keyword in lowered for keyword in ['api', 'endpoint', 'route']):
+                criteria.append(f"- [ ] API behavior implemented for: {normalized}")
+            elif any(keyword in lowered for keyword in ['ui', 'page', 'component', 'button', 'form']):
+                criteria.append(f"- [ ] UI behavior implemented for: {normalized}")
+            elif any(keyword in lowered for keyword in ['test', 'coverage', 'jest', 'pytest']):
+                criteria.append(f"- [ ] Test coverage includes: {normalized}")
+            elif any(keyword in lowered for keyword in ['performance', 'optimize', 'latency', 'fast']):
+                criteria.append(f"- [ ] Performance requirement validated: {normalized}")
+            else:
+                criteria.append(f"- [ ] {normalized}")
+
+            if len(criteria) >= 6:
+                break
+
+        baseline = [
+            "- [ ] Code follows project conventions and best practices",
+            "- [ ] Unit and integration tests pass",
+            "- [ ] Documentation updated where behavior changes",
+        ]
+
+        final_criteria = criteria[:]
+        for default_item in baseline:
+            if len(final_criteria) >= 8:
+                break
+            final_criteria.append(default_item)
+
+        return "\n".join(final_criteria)
+
+    def _build_risk_section(self, description: str) -> str:
+        """Infer likely implementation risks from task keywords"""
+        lowered = description.lower()
+        risks: List[str] = []
+
+        if any(keyword in lowered for keyword in ['auth', 'oauth', 'security', 'token', 'permission']):
+            risks.append("- Security/auth risk: verify permissions, token handling, and access boundaries")
+        if any(keyword in lowered for keyword in ['database', 'migration', 'schema', 'sql']):
+            risks.append("- Data risk: validate schema changes and maintain backward compatibility")
+        if any(keyword in lowered for keyword in ['performance', 'real-time', 'stream', 'websocket']):
+            risks.append("- Performance risk: benchmark critical paths and monitor response times")
+        if any(keyword in lowered for keyword in ['ui', 'frontend', 'responsive', 'accessibility', 'a11y']):
+            risks.append("- UX risk: validate responsive behavior and accessibility expectations")
+        if any(keyword in lowered for keyword in ['integration', 'third-party', 'github', 'api']):
+            risks.append("- Integration risk: guard for external API failures and rate limits")
+
+        if not risks:
+            risks.append("- Delivery risk: confirm assumptions early with a small vertical slice")
+
+        return "## Risks & Mitigations\n\n" + "\n".join(risks)
+
+    def _extract_related_components(self, description: str) -> str:
+        """Infer likely components/files impacted by the task"""
+        lowered = description.lower()
+        components: List[str] = []
+
+        mapping = [
+            (['ticket', 'tickets'], 'tickets page and ticket generator modules'),
+            (['auth', 'oauth', 'login', 'token'], 'authentication routes and session/token handling'),
+            (['api', 'endpoint', 'route'], 'API route handlers and request/response validation'),
+            (['database', 'schema', 'migration', 'sql'], 'database models, migrations, and persistence layer'),
+            (['ui', 'frontend', 'component', 'page', 'button', 'form'], 'UI components and page-level state management'),
+            (['test', 'jest', 'pytest', 'coverage'], 'unit/integration test suites and fixtures'),
+            (['recommendation', 'ml', 'model', 'estimation'], 'estimation/recommendation logic and metric computations'),
+        ]
+
+        for keywords, label in mapping:
+            if any(keyword in lowered for keyword in keywords):
+                components.append(f"- {label}")
+
+        if not components:
+            components.append("- core application modules associated with this feature scope")
+
+        return "\n".join(components[:6])
+
+    def _extract_dependencies(self, description: str) -> str:
+        """Infer runtime or implementation dependencies from language cues"""
+        lowered = description.lower()
+        deps: List[str] = []
+
+        if any(keyword in lowered for keyword in ['github', 'oauth', 'token', 'api']):
+            deps.append("- External GitHub API availability and valid OAuth token/cookies")
+        if any(keyword in lowered for keyword in ['database', 'sqlite', 'schema', 'migration']):
+            deps.append("- Database schema consistency and migration compatibility")
+        if any(keyword in lowered for keyword in ['test', 'jest', 'pytest']):
+            deps.append("- Test tooling configuration and representative fixtures")
+        if any(keyword in lowered for keyword in ['performance', 'benchmark']):
+            deps.append("- Baseline metrics for before/after performance comparison")
+
+        deps.append("- Environment variables configured for local/dev execution")
+
+        unique_deps: List[str] = []
+        for item in deps:
+            if item not in unique_deps:
+                unique_deps.append(item)
+
+        return "\n".join(unique_deps[:6])
+
+    def _build_implementation_plan(self, description: str, context: str) -> str:
+        """Produce a concise implementation sequence based on context and text"""
+        lowered = description.lower()
+        steps: List[str] = [
+            "1. Confirm scope, inputs/outputs, and non-functional constraints",
+            "2. Implement core behavior with minimal vertical slice first",
+            "3. Add validation/error handling and edge-case protection",
+        ]
+
+        if any(keyword in lowered for keyword in ['database', 'schema', 'migration']):
+            steps.append("4. Apply persistence/schema changes and verify backward compatibility")
+        elif any(keyword in lowered for keyword in ['api', 'endpoint', 'route']):
+            steps.append("4. Update API contracts and ensure response stability")
+        elif any(keyword in lowered for keyword in ['ui', 'frontend', 'component', 'page']):
+            steps.append("4. Connect UI state/events and verify interaction flow")
+        else:
+            steps.append("4. Integrate with adjacent modules and maintain existing behavior")
+
+        if context.lower() in ['full-stack', 'backend']:
+            steps.append("5. Add telemetry/logging for observability of the new workflow")
+        else:
+            steps.append("5. Validate visual and interaction behavior across key states")
+
+        return "\n".join(steps)
+
+    def _build_testing_requirements(self, description: str, context: str) -> str:
+        """Generate context-aware testing checklist"""
+        lowered = description.lower()
+        checks: List[str] = []
+
+        if context.lower() in ['frontend', 'full-stack'] or any(
+            keyword in lowered for keyword in ['ui', 'component', 'page', 'form']
+        ):
+            checks.append("- [ ] Component/page interaction tests cover success and failure states")
+            checks.append("- [ ] Accessibility sanity checks pass for keyboard and labels")
+
+        if context.lower() in ['backend', 'full-stack'] or any(
+            keyword in lowered for keyword in ['api', 'endpoint', 'database', 'schema']
+        ):
+            checks.append("- [ ] API contract tests validate status codes and response shape")
+            checks.append("- [ ] Data-layer tests cover edge cases and invalid input handling")
+
+        checks.append("- [ ] Regression test added for the primary user path")
+        checks.append("- [ ] Manual smoke test executed in local environment")
+
+        if any(keyword in lowered for keyword in ['performance', 'optimize', 'latency']):
+            checks.append("- [ ] Performance comparison captured against baseline")
+
+        return "\n".join(checks[:8])
+
+    def _determine_priority(self, description: str, estimation: Dict) -> str:
+        """Infer a lightweight priority tier from risk/urgency language and effort"""
+        lowered = description.lower()
+        estimated_hours = float(estimation.get('hours', 0) or 0)
+
+        urgent_terms = ['urgent', 'critical', 'blocker', 'security', 'production', 'outage', 'hotfix']
+        high_impact_terms = ['payment', 'auth', 'checkout', 'data loss', 'compliance']
+
+        if any(term in lowered for term in urgent_terms):
+            return 'P0'
+        if any(term in lowered for term in high_impact_terms):
+            return 'P1'
+        if estimated_hours >= 16:
+            return 'P1'
+        if estimated_hours >= 6:
+            return 'P2'
+        return 'P3'
+
+    def _build_definition_of_done(self, description: str, context: str) -> str:
+        """Generate adaptive definition of done checklist"""
+        lowered = description.lower()
+        done = [
+            "- [ ] All acceptance criteria are satisfied",
+            "- [ ] Automated tests are green in CI/local",
+            "- [ ] Code reviewed and approved",
+            "- [ ] User-facing or developer docs updated",
+            "- [ ] No regressions observed in related flows",
+        ]
+
+        if context.lower() in ['backend', 'full-stack'] or any(
+            keyword in lowered for keyword in ['api', 'database', 'schema']
+        ):
+            done.append("- [ ] API/data compatibility validated for existing consumers")
+
+        if context.lower() in ['frontend', 'full-stack'] or any(
+            keyword in lowered for keyword in ['ui', 'page', 'component']
+        ):
+            done.append("- [ ] UX/accessibility checks completed for key screens")
+
+        return "\n".join(done[:8])
     
     def _extract_title(self, description: str) -> str:
         """Extract a concise title from description"""
-        # Take first sentence or first 60 chars
-        first_sentence = description.split('.')[0].split('\n')[0]
-        title = first_sentence[:60].strip()
-        
-        # Capitalize properly
-        if title and not title[0].isupper():
-            title = title[0].upper() + title[1:]
-        
+        first_sentence = description.split('.')[0].split('\n')[0].strip()
+
+        if not first_sentence:
+            return "New Feature Implementation"
+
+        cleaned = re.sub(r'\s+', ' ', first_sentence)
+        cleaned = re.sub(r'^(please\s+|can you\s+|i want to\s+|we need to\s+)', '', cleaned, flags=re.IGNORECASE)
+
+        action_prefixes = [
+            'add', 'implement', 'create', 'build', 'fix', 'improve', 'update', 'refactor', 'support', 'enable'
+        ]
+
+        words = cleaned.split()
+        if words and words[0].lower() in action_prefixes:
+            cleaned = f"{words[0].capitalize()} {' '.join(words[1:])}".strip()
+        elif cleaned:
+            cleaned = cleaned[0].upper() + cleaned[1:]
+
+        title = cleaned[:72].strip(' -:')
         return title if title else "New Feature Implementation"
     
     def _generate_ticket_id(self) -> str:

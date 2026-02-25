@@ -5,6 +5,7 @@ import Auth from '@/components/Auth';
 import SessionWrapper from '@/components/SessionWrapper';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { PlpSearchStateProvider } from '@/contexts/PlpSearchStateContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,7 +33,9 @@ export default function RootLayout({
         <SessionWrapper>
           <FavoritesProvider>
             <CartProvider>
-              <Auth>{children}</Auth>
+              <PlpSearchStateProvider>
+                <Auth>{children}</Auth>
+              </PlpSearchStateProvider>
             </CartProvider>
           </FavoritesProvider>
         </SessionWrapper>

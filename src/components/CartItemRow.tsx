@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TrashIcon } from '@/icons/TrashIcon';
+import Icon from '@/components/ui/Icon';
 import { getProductImageUrl } from '@/utils/colorUtils';
 import type { CartItem } from '@/utils/fetchCart';
 import Badge from './ui/Badge';
@@ -84,7 +84,7 @@ const CartItemRow = ({ item, onQuantityChange, onRemove, onSaveForLater }: CartI
           className="h-7 w-7 p-0 hover:bg-gray-200"
           aria-label="Remove item"
         >
-          <TrashIcon className="w-4 h-4" />
+          <Icon name="trash" size={16} />
         </Button>
       </div>
     </div>

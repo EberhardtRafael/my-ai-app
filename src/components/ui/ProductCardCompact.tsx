@@ -6,7 +6,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import ProductPrice from '@/components/ui/ProductPrice';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
+import Icon from '@/components/ui/Icon';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
 type ProductCardCompactProps = {
@@ -90,11 +90,11 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
               className="absolute top-1 right-1 p-0.5 bg-white shadow-sm hover:shadow-md"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              {isFavorite ? (
-                <HeartFilledIcon className="w-2.5 h-2.5 text-red-500" />
-              ) : (
-                <HeartIcon className="w-2.5 h-2.5 text-gray-600" />
-              )}
+              <Icon
+                name={isFavorite ? 'heart-filled' : 'heart'}
+                size={10}
+                className={isFavorite ? 'text-red-500' : 'text-gray-600'}
+              />
             </Button>
           )}
         </div>

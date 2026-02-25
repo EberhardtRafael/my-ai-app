@@ -4,7 +4,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
+import Icon from '@/components/ui/Icon';
 import OptionSelector from './OptionSelector';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -220,11 +220,11 @@ const SidePanel: React.FC<SidePanelProps> = ({
           className="absolute -top-2 -right-2 p-2"
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          {isFavorite ? (
-            <HeartFilledIcon className="w-5 h-5 text-gray-700" />
-          ) : (
-            <HeartIcon className="w-5 h-5 text-gray-400" />
-          )}
+          <Icon
+            name={isFavorite ? 'heart-filled' : 'heart'}
+            size={20}
+            className={isFavorite ? 'text-gray-700' : 'text-gray-400'}
+          />
         </Button>
       )}
       <h2 className="text-sm font-bold mb-2">{product?.name || 'Product Name'}</h2>
