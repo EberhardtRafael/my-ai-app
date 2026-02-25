@@ -12,7 +12,11 @@ export type Review = {
   updatedAt: string;
 };
 
-export async function fetchReviews(productId: number, limit: number = 20, offset: number = 0): Promise<Review[]> {
+export async function fetchReviews(
+  productId: number,
+  limit: number = 20,
+  offset: number = 0
+): Promise<Review[]> {
   const query = `
     query GetReviews($productId: Int!, $limit: Int!, $offset: Int!) {
       reviews(productId: $productId, limit: $limit, offset: $offset) {

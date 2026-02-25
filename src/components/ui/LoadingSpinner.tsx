@@ -3,9 +3,9 @@ type LoadingSpinnerProps = {
   className?: string;
 };
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  message = 'Loading...', 
-  className = '' 
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  message = 'Loading...',
+  className = '',
 }) => {
   return (
     <div className={`flex items-center justify-center py-8 ${className}`}>

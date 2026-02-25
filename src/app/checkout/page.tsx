@@ -11,6 +11,7 @@ import PageShell from '@/components/ui/PageShell';
 import Toast from '@/components/ui/Toast';
 import { useToast } from '@/components/ui/useToast';
 import { useCart } from '@/contexts/CartContext';
+import { formatCardNumber, formatExpiryDate, simulatePayment } from '@/utils/cardUtils';
 import { type CartItem, fetchCart } from '@/utils/fetchCart';
 import { checkoutCart } from '@/utils/fetchOrders';
 
@@ -54,35 +55,6 @@ export default function CheckoutPage() {
     setLoading(false);
   };
 
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, '');
-    const chunks = cleaned.match(/.{1,4}/g);
-    return chunks ? chunks.join(' ') : cleaned;
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
-    }
-    return cleaned;
-  };
-
-  const simulatePayment = async (): Promise<{ success: boolean; message: string }> => {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Simple validation for demo
-    const cardNum = cardNumber.replace(/\s/g, '');
-
-    // Simulate failure for certain card numbers
-    if (cardNum.startsWith('4000')) {
-      return { success: false, message: 'Payment declined. Please try another card.' };
-    }
-
-    return { success: true, message: 'Payment processed successfully!' };
-  };
-
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -118,7 +90,7 @@ export default function CheckoutPage() {
     setProcessing(true);
 
     try {
-      const result = await simulatePayment();
+      const result = await simulatePayment(cardNumber);
 
       if (result.success && session?.user?.id) {
         const userId = parseInt(session.user.id, 10);
@@ -152,19 +124,6 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cartItems.length === 0 && !loading && session?.user) {
-    return (
-      <PageShell title="Checkout" requireAuth isAuthenticated={!!session?.user} loading={loading}>
-        <EmptyState
-          title="Your cart is empty"
-          message="Add items to your cart before checking out."
-          actionLabel="Browse Products"
-          actionHref="/plp"
-        />
-      </PageShell>
-    );
-  }
-
   const subtotal: number = cartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
@@ -173,175 +132,188 @@ export default function CheckoutPage() {
   const tax: number = subtotal * 0.1; // 10% tax
   const total: number = subtotal + shipping + tax;
 
+  const showEmptyState = cartItems.length === 0 && !loading && session?.user;
+
   return (
     <PageShell title="Checkout" requireAuth isAuthenticated={!!session?.user} loading={loading}>
-      <form onSubmit={handlePlaceOrder}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Shipping Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card
-              header={<h2 className="text-xl font-bold text-gray-800">Shipping Information</h2>}
-            >
-              <div className="space-y-4">
-                <Input
-                  id="fullName"
-                  label="Full Name"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-
-                <Input
-                  id="address"
-                  label="Address"
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                />
-
-                <div className="grid grid-cols-2 gap-4">
+      {showEmptyState ? (
+        <EmptyState
+          title="Your cart is empty"
+          message="Add items to your cart before checking out."
+          actionLabel="Browse Products"
+          actionHref="/plp"
+        />
+      ) : (
+        <form onSubmit={handlePlaceOrder}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Shipping Information */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card
+                header={<h2 className="text-xl font-bold text-gray-800">Shipping Information</h2>}
+              >
+                <div className="space-y-4">
                   <Input
-                    id="city"
-                    label="City"
+                    id="fullName"
+                    label="Full Name"
                     type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     required
                   />
 
                   <Input
-                    id="postalCode"
-                    label="Postal Code"
+                    id="address"
+                    label="Address"
                     type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      id="city"
+                      label="City"
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    />
+
+                    <Input
+                      id="postalCode"
+                      label="Postal Code"
+                      type="text"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <Input
+                    id="country"
+                    label="Country"
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    required
+                  />
+
+                  <Input
+                    id="phone"
+                    label="Phone Number"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>
+              </Card>
 
-                <Input
-                  id="country"
-                  label="Country"
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  required
-                />
-
-                <Input
-                  id="phone"
-                  label="Phone Number"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
-            </Card>
-
-            <Card header={<h2 className="text-xl font-bold text-gray-800">Payment Information</h2>}>
-              <div className="space-y-4">
-                <Input
-                  id="cardName"
-                  label="Cardholder Name"
-                  type="text"
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                />
-
-                <Input
-                  id="cardNumber"
-                  label="Card Number"
-                  type="text"
-                  value={cardNumber}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    if (value.length <= 16) {
-                      setCardNumber(formatCardNumber(value));
-                    }
-                  }}
-                  placeholder="1234 5678 9012 3456"
-                  required
-                />
-
-                <div className="grid grid-cols-2 gap-4">
+              <Card
+                header={<h2 className="text-xl font-bold text-gray-800">Payment Information</h2>}
+              >
+                <div className="space-y-4">
                   <Input
-                    id="expiryDate"
-                    label="Expiry Date"
+                    id="cardName"
+                    label="Cardholder Name"
                     type="text"
-                    value={expiryDate}
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="John Doe"
+                    required
+                  />
+
+                  <Input
+                    id="cardNumber"
+                    label="Card Number"
+                    type="text"
+                    value={cardNumber}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '');
-                      if (value.length <= 4) {
-                        setExpiryDate(formatExpiryDate(value));
+                      if (value.length <= 16) {
+                        setCardNumber(formatCardNumber(value));
                       }
                     }}
-                    placeholder="MM/YY"
+                    placeholder="1234 5678 9012 3456"
                     required
                   />
 
-                  <Input
-                    id="cvv"
-                    label="CVV"
-                    type="text"
-                    value={cvv}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      if (value.length <= 4) {
-                        setCvv(value);
-                      }
-                    }}
-                    placeholder="123"
-                    required
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      id="expiryDate"
+                      label="Expiry Date"
+                      type="text"
+                      value={expiryDate}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 4) {
+                          setExpiryDate(formatExpiryDate(value));
+                        }
+                      }}
+                      placeholder="MM/YY"
+                      required
+                    />
 
-                <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
-                  <p className="font-semibold mb-1">Test Cards:</p>
-                  <p>• 4242 4242 4242 4242 - Success</p>
-                  <p>• 4000 0000 0000 0000 - Declined</p>
+                    <Input
+                      id="cvv"
+                      label="CVV"
+                      type="text"
+                      value={cvv}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 4) {
+                          setCvv(value);
+                        }
+                      }}
+                      placeholder="123"
+                      required
+                    />
+                  </div>
+
+                  <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+                    <p className="font-semibold mb-1">Test Cards:</p>
+                    <p>• 4242 4242 4242 4242 - Success</p>
+                    <p>• 4000 0000 0000 0000 - Declined</p>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <Card
+                header={<h2 className="text-xl font-bold text-gray-800">Order Summary</h2>}
+                footer={
+                  <Button type="submit" className="w-full" disabled={processing}>
+                    {processing ? 'Processing...' : 'Place Order'}
+                  </Button>
+                }
+                className="sticky top-6"
+              >
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span className="text-gray-700">
+                          {item.product.name} x {item.quantity}
+                        </span>
+                        <span className="text-gray-800">
+                          ${(item.product.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-gray-300 pt-2">
+                    <OrderSummary subtotal={subtotal} shipping={shipping} tax={tax} />
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <Card
-              header={<h2 className="text-xl font-bold text-gray-800">Order Summary</h2>}
-              footer={
-                <Button type="submit" className="w-full" disabled={processing}>
-                  {processing ? 'Processing...' : 'Place Order'}
-                </Button>
-              }
-              className="sticky top-6"
-            >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-gray-700">
-                        {item.product.name} x {item.quantity}
-                      </span>
-                      <span className="text-gray-800">
-                        ${(item.product.price * item.quantity).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-gray-300 pt-2">
-                  <OrderSummary subtotal={subtotal} shipping={shipping} tax={tax} />
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </form>
+        </form>
+      )}
       {toast.toasts.map((t) => (
         <Toast
           key={t.id}

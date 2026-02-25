@@ -87,7 +87,10 @@ export async function addToCart(
   const response = await fetch('/api/cart', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: mutation, variables: { userId, productId, variantId, quantity } }),
+    body: JSON.stringify({
+      query: mutation,
+      variables: { userId, productId, variantId, quantity },
+    }),
   });
 
   return response.json();

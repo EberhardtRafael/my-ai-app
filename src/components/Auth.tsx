@@ -3,9 +3,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import Header from './Header';
+import LoadingState from './LoadingState';
 
 export default function Auth({ children }: { children: React.ReactNode }) {
-  const loadingText = 'Loading...';
   const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -16,12 +16,16 @@ export default function Auth({ children }: { children: React.ReactNode }) {
     }
   }, [status, router, pathname]);
 
-  if (status === 'loading')
-    return <div className="flex min-h-screen items-center justify-center">{loadingText}</div>;
-  if (status === 'unauthenticated' && pathname !== '/auth/signin') return null;
+  const isLoading = status === 'loading';
+  const isUnauthenticated = status === 'unauthenticated' && pathname !== '/auth/signin';
+  const showHeader = pathname !== '/auth/signin';
+
+  if (isLoading) return <LoadingState />;
+  if (isUnauthenticated) return null;
+
   return (
     <>
-      {pathname !== '/auth/signin' && <Header />}
+      {showHeader && <Header />}
       {children}
     </>
   );

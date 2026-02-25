@@ -1,5 +1,5 @@
-import StatusMessage from '@/components/ui/StatusMessage';
 import Icon from '@/components/ui/Icon';
+import StatusMessage from '@/components/ui/StatusMessage';
 import type { ChatMessage } from '../types';
 import AssistantQuickLinksList from './AssistantQuickLinksList';
 
@@ -40,7 +40,11 @@ export default function AssistantMessageList({
 
       {isLoading && (
         <div className="mr-10 rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-900">
-          <StatusMessage icon={<Icon name="hourglass" size={18} />} message="Thinking..." variant="info" />
+          <StatusMessage
+            icon={<Icon name="hourglass" size={18} />}
+            message="Thinking..."
+            variant="info"
+          />
         </div>
       )}
     </div>

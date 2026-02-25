@@ -1,6 +1,7 @@
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConnectionCard from '@/components/ui/ConnectionCard';
+import Icon from '@/components/ui/Icon';
 import InfoMessage from '@/components/ui/InfoMessage';
 import Input from '@/components/ui/Input';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -8,7 +9,6 @@ import Select from '@/components/ui/Select';
 import StatusMessage from '@/components/ui/StatusMessage';
 import Textarea from '@/components/ui/Textarea';
 import { TICKET_CONTEXT_OPTIONS } from '@/constants/ticketOptions';
-import Icon from '@/components/ui/Icon';
 
 type TicketSetupPanelProps = {
   isConnected: boolean;

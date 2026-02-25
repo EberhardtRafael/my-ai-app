@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { Review } from '@/utils/fetchReviews';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
@@ -17,7 +16,14 @@ type ReviewsSectionProps = {
   onReviewSubmitted?: () => void;
 };
 
-export default function ReviewsSection({ productId, userId, ratingAvg, ratingCount, reviews, onReviewSubmitted }: ReviewsSectionProps) {
+export default function ReviewsSection({
+  productId,
+  userId,
+  ratingAvg,
+  ratingCount,
+  reviews,
+  onReviewSubmitted,
+}: ReviewsSectionProps) {
   const handleReviewSubmitted = () => {
     onReviewSubmitted?.();
   };
@@ -46,19 +52,16 @@ export default function ReviewsSection({ productId, userId, ratingAvg, ratingCou
           {/* Review Form - only for logged-in users */}
           {userId && (
             <div className="mb-8">
-              <ReviewForm 
-                productId={productId} 
-                userId={userId} 
+              <ReviewForm
+                productId={productId}
+                userId={userId}
                 onReviewSubmitted={handleReviewSubmitted}
               />
             </div>
           )}
 
           {/* Reviews List - shows existing reviews or empty state */}
-          <ReviewList 
-            productId={productId}
-            reviews={reviews}
-          />
+          <ReviewList reviews={reviews} />
         </div>
       )}
     </>

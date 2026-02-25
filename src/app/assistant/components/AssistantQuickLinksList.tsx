@@ -1,5 +1,5 @@
-import AssistantActionList from './AssistantActionList';
 import type { AssistantQuickLink } from '../types';
+import AssistantActionList from './AssistantActionList';
 
 type AssistantQuickLinksListProps = {
   quickLinks: AssistantQuickLink[];

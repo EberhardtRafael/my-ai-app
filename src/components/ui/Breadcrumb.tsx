@@ -27,7 +27,11 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                 <span className={isLast ? 'text-gray-800' : undefined}>{item.label}</span>
               )}
 
-              {!isLast && <span aria-hidden="true" className="text-gray-400">/</span>}
+              {!isLast && (
+                <span aria-hidden="true" className="text-gray-400">
+                  /
+                </span>
+              )}
             </li>
           );
         })}

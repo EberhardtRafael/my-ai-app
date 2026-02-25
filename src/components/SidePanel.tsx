@@ -2,9 +2,9 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import Icon from '@/components/ui/Icon';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import Icon from '@/components/ui/Icon';
 import OptionSelector from './OptionSelector';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -144,8 +144,8 @@ const SidePanel: React.FC<SidePanelProps> = ({
         body: JSON.stringify({
           query: mutation,
           variables: {
-            userId: Number.parseInt(userId),
-            productId: Number.parseInt(productId),
+            userId: Number.parseInt(userId, 10),
+            productId: Number.parseInt(productId, 10),
             variantId: variant.id,
             quantity: 1,
           },
@@ -190,7 +190,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: cartQuery,
-          variables: { userId: Number.parseInt(userId) },
+          variables: { userId: Number.parseInt(userId, 10) },
         }),
       });
       const cartResult = await cartResponse.json();

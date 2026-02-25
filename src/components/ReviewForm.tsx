@@ -24,7 +24,7 @@ export default function ReviewForm({ productId, userId, onReviewSubmitted }: Rev
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (rating < 1 || rating > 5) {
       setError('Please select a rating');
       return;
@@ -50,15 +50,11 @@ export default function ReviewForm({ productId, userId, onReviewSubmitted }: Rev
   };
 
   return (
-    <Card
-      header={<h3 className="text-lg font-semibold">Write a Review</h3>}
-    >
+    <Card header={<h3 className="text-lg font-semibold">Write a Review</h3>}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Star Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Rating *
-          </label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</span>
           <StarRatingSelector value={rating} onChange={setRating} />
         </div>
 
@@ -84,11 +80,7 @@ export default function ReviewForm({ productId, userId, onReviewSubmitted }: Rev
 
         {error && <ErrorMessage message={error} />}
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Submitting...' : 'Submit Review'}
         </Button>
       </form>
