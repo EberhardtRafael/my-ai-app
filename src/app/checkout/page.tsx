@@ -11,11 +11,13 @@ import PageShell from '@/components/ui/PageShell';
 import Toast from '@/components/ui/Toast';
 import { useToast } from '@/components/ui/useToast';
 import { useCart } from '@/contexts/CartContext';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { formatCardNumber, formatExpiryDate, simulatePayment } from '@/utils/cardUtils';
 import { type CartItem, fetchCart } from '@/utils/fetchCart';
 import { checkoutCart } from '@/utils/fetchOrders';
 
 export default function CheckoutPage() {
+  const { t } = useLocalization();
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,30 +62,30 @@ export default function CheckoutPage() {
 
     // Validate shipping info
     if (!fullName || !address || !city || !postalCode || !country || !phone) {
-      toast.warning('Required Fields', 'Please fill in all shipping information');
+      toast.warning(t('checkout.requiredFieldsTitle'), t('checkout.requiredShippingMessage'));
       return;
     }
 
     // Validate payment info
     if (!cardNumber || !cardName || !expiryDate || !cvv) {
-      toast.warning('Required Fields', 'Please fill in all payment information');
+      toast.warning(t('checkout.requiredFieldsTitle'), t('checkout.requiredPaymentMessage'));
       return;
     }
 
     const cardNum = cardNumber.replace(/\s/g, '');
     if (cardNum.length !== 16) {
-      toast.error('Invalid Card', 'Card number must be 16 digits');
+      toast.error(t('checkout.invalidCardTitle'), t('checkout.invalidCardMessage'));
       return;
     }
 
     if (cvv.length !== 3 && cvv.length !== 4) {
-      toast.error('Invalid CVV', 'CVV must be 3 or 4 digits');
+      toast.error(t('checkout.invalidCvvTitle'), t('checkout.invalidCvvMessage'));
       return;
     }
 
     const [month, year] = expiryDate.split('/');
     if (!month || !year || parseInt(month, 10) < 1 || parseInt(month, 10) > 12) {
-      toast.error('Invalid Expiry', 'Please enter a valid expiry date');
+      toast.error(t('checkout.invalidExpiryTitle'), t('checkout.invalidExpiryMessage'));
       return;
     }
 
@@ -111,14 +113,14 @@ export default function CheckoutPage() {
           total,
         });
 
-        toast.success('Order Placed', 'Your order has been placed successfully!');
+        toast.success(t('checkout.orderPlacedTitle'), t('checkout.orderPlacedMessage'));
         setCartItems([]);
         setCartItemsCount(0);
       } else {
-        toast.error('Payment Failed', result.message);
+        toast.error(t('checkout.paymentFailedTitle'), result.message);
       }
     } catch (_error) {
-      toast.error('Payment Error', 'An error occurred while processing your payment');
+      toast.error(t('checkout.paymentErrorTitle'), t('checkout.paymentErrorMessage'));
     } finally {
       setProcessing(false);
     }
@@ -135,12 +137,17 @@ export default function CheckoutPage() {
   const showEmptyState = cartItems.length === 0 && !loading && session?.user;
 
   return (
-    <PageShell title="Checkout" requireAuth isAuthenticated={!!session?.user} loading={loading}>
+    <PageShell
+      title={t('checkout.title')}
+      requireAuth
+      isAuthenticated={!!session?.user}
+      loading={loading}
+    >
       {showEmptyState ? (
         <EmptyState
-          title="Your cart is empty"
-          message="Add items to your cart before checking out."
-          actionLabel="Browse Products"
+          title={t('checkout.emptyTitle')}
+          message={t('checkout.emptyMessage')}
+          actionLabel={t('checkout.browseProducts')}
           actionHref="/plp"
         />
       ) : (
@@ -149,12 +156,16 @@ export default function CheckoutPage() {
             {/* Shipping Information */}
             <div className="lg:col-span-2 space-y-6">
               <Card
-                header={<h2 className="text-xl font-bold text-gray-800">Shipping Information</h2>}
+                header={
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('checkout.shippingInformation')}
+                  </h2>
+                }
               >
                 <div className="space-y-4">
                   <Input
                     id="fullName"
-                    label="Full Name"
+                    label={t('checkout.fullName')}
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -163,7 +174,7 @@ export default function CheckoutPage() {
 
                   <Input
                     id="address"
-                    label="Address"
+                    label={t('checkout.address')}
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
@@ -173,7 +184,7 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       id="city"
-                      label="City"
+                      label={t('checkout.city')}
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
@@ -182,7 +193,7 @@ export default function CheckoutPage() {
 
                     <Input
                       id="postalCode"
-                      label="Postal Code"
+                      label={t('checkout.postalCode')}
                       type="text"
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
@@ -192,7 +203,7 @@ export default function CheckoutPage() {
 
                   <Input
                     id="country"
-                    label="Country"
+                    label={t('checkout.country')}
                     type="text"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
@@ -201,7 +212,7 @@ export default function CheckoutPage() {
 
                   <Input
                     id="phone"
-                    label="Phone Number"
+                    label={t('checkout.phone')}
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -211,22 +222,26 @@ export default function CheckoutPage() {
               </Card>
 
               <Card
-                header={<h2 className="text-xl font-bold text-gray-800">Payment Information</h2>}
+                header={
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('checkout.paymentInformation')}
+                  </h2>
+                }
               >
                 <div className="space-y-4">
                   <Input
                     id="cardName"
-                    label="Cardholder Name"
+                    label={t('checkout.cardholderName')}
                     type="text"
                     value={cardName}
                     onChange={(e) => setCardName(e.target.value)}
-                    placeholder="John Doe"
+                    placeholder={t('checkout.cardholderNamePlaceholder')}
                     required
                   />
 
                   <Input
                     id="cardNumber"
-                    label="Card Number"
+                    label={t('checkout.cardNumber')}
                     type="text"
                     value={cardNumber}
                     onChange={(e) => {
@@ -235,14 +250,14 @@ export default function CheckoutPage() {
                         setCardNumber(formatCardNumber(value));
                       }
                     }}
-                    placeholder="1234 5678 9012 3456"
+                    placeholder={t('checkout.cardNumberPlaceholder')}
                     required
                   />
 
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       id="expiryDate"
-                      label="Expiry Date"
+                      label={t('checkout.expiryDate')}
                       type="text"
                       value={expiryDate}
                       onChange={(e) => {
@@ -251,13 +266,13 @@ export default function CheckoutPage() {
                           setExpiryDate(formatExpiryDate(value));
                         }
                       }}
-                      placeholder="MM/YY"
+                      placeholder={t('checkout.expiryDatePlaceholder')}
                       required
                     />
 
                     <Input
                       id="cvv"
-                      label="CVV"
+                      label={t('checkout.cvv')}
                       type="text"
                       value={cvv}
                       onChange={(e) => {
@@ -266,15 +281,15 @@ export default function CheckoutPage() {
                           setCvv(value);
                         }
                       }}
-                      placeholder="123"
+                      placeholder={t('checkout.cvvPlaceholder')}
                       required
                     />
                   </div>
 
                   <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
-                    <p className="font-semibold mb-1">Test Cards:</p>
-                    <p>• 4242 4242 4242 4242 - Success</p>
-                    <p>• 4000 0000 0000 0000 - Declined</p>
+                    <p className="font-semibold mb-1">{t('checkout.testCardsTitle')}</p>
+                    <p>{t('checkout.testCardSuccess')}</p>
+                    <p>{t('checkout.testCardDeclined')}</p>
                   </div>
                 </div>
               </Card>
@@ -283,10 +298,12 @@ export default function CheckoutPage() {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card
-                header={<h2 className="text-xl font-bold text-gray-800">Order Summary</h2>}
+                header={
+                  <h2 className="text-xl font-bold text-gray-800">{t('checkout.orderSummary')}</h2>
+                }
                 footer={
                   <Button type="submit" className="w-full" disabled={processing}>
-                    {processing ? 'Processing...' : 'Place Order'}
+                    {processing ? t('checkout.processing') : t('checkout.placeOrder')}
                   </Button>
                 }
                 className="sticky top-6"

@@ -7,9 +7,10 @@ import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import Input from '@/components/ui/Input';
+import { useLocalization } from '@/contexts/LocalizationContext';
 
 const LoginPage = () => {
-  const signInText = 'Sign In';
+  const { t } = useLocalization();
   const [userName, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -35,7 +36,7 @@ const LoginPage = () => {
     });
 
     if (result?.error) {
-      setError('Invalid username or password');
+      setError(t('auth.invalidCredentials'));
     } else if (result?.ok) {
       // Redirect on success
       window.location.href = '/';
@@ -47,20 +48,20 @@ const LoginPage = () => {
       <form className="flex flex-col gap-4 items-left" onSubmit={handleSubmit}>
         <Input
           id="username"
-          label="Username"
+          label={t('auth.username')}
           type="text"
           value={userName}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
+          placeholder={t('auth.username')}
         />
         <div className="relative">
           <Input
             id="password"
-            label="Password"
+            label={t('auth.password')}
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             className="pr-10"
           />
           <Button
@@ -77,7 +78,7 @@ const LoginPage = () => {
             {error}
           </div>
         )}
-        <Button type="submit">{signInText}</Button>
+        <Button type="submit">{t('auth.signIn')}</Button>
       </form>
     </div>
   );

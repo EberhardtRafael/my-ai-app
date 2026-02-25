@@ -15,7 +15,8 @@
     "test:python:coverage": "cd src/app/api/backend && /usr/bin/python3 -m pytest --cov=. --cov-report=html --cov-report=term",
     "test:all": "yarn test && yarn test:python",
     "backend": "cd src/app/api/backend && source venv/bin/activate && python app.py",
-    "setup:tickets": "./setup-ticket-generator.sh"
+    "setup:tickets": "./setup-ticket-generator.sh",
+    "i18n:check": "ts-node scripts/check-i18n-keys.ts"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -23,6 +24,7 @@
     "dotenv": "^17.2.3",
     "next": "15.5.4",
     "next-auth": "^4.24.13",
+    "next-intl": "^4.8.3",
     "openai": "^6.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",

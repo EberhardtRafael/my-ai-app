@@ -6,7 +6,9 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import ProductPrice from '@/components/ui/ProductPrice';
+import { JSON_HEADERS } from '@/constants/http';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
 type ProductCardCompactProps = {
@@ -29,6 +31,7 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   initialIsFavorite = false,
   color,
 }) => {
+  const { t } = useLocalization();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
   const { setFavoritesCount } = useFavorites();
@@ -45,7 +48,7 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
 
       const response = await fetch('/api/favorites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query: mutation }),
       });
 
@@ -58,7 +61,7 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         const countQuery = `{ favorites(userId: ${userId}, activeOnly: true) { id } }`;
         const countResponse = await fetch('/api/favorites', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ query: countQuery }),
         });
         const countResult = await countResponse.json();
@@ -80,7 +83,11 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
       <div className="bg-white rounded overflow-hidden hover:shadow-md transition-shadow duration-200 border border-gray-200 h-full">
         {/* Tiny Image */}
         <div className="relative aspect-video bg-gray-100">
-          <img src={imageUrl} alt={name || 'Product'} className="w-full h-full object-cover" />
+          <img
+            src={imageUrl}
+            alt={name || t('product.altFallback')}
+            className="w-full h-full object-cover"
+          />
           {userId && (
             <Button
               type="button"
@@ -88,7 +95,9 @@ const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
               disabled={loading}
               variant="ghost"
               className="absolute top-1 right-1 p-0.5 bg-white shadow-sm hover:shadow-md"
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={
+                isFavorite ? t('product.removeFromFavorites') : t('product.addToFavorites')
+              }
             >
               <Icon
                 name={isFavorite ? 'heart-filled' : 'heart'}

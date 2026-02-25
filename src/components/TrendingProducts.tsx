@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import type { Product } from '@/utils/fetchProducts';
 import { fetchTrending } from '@/utils/fetchTrending';
-import TrendingErrorState from './TrendingErrorState';
-import TrendingLoadingState from './TrendingLoadingState';
+import TrendingStateFactory from './TrendingStateFactory';
 import Carousel from './ui/Carousel';
 import ProductCardCompact from './ui/ProductCardCompact';
 import SectionHeader from './ui/SectionHeader';
@@ -22,6 +22,7 @@ export default function TrendingProducts({
   hours = 48,
   limit = 10,
 }: TrendingProductsProps) {
+  const { t } = useLocalization();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,13 +45,32 @@ export default function TrendingProducts({
     loadTrending();
   }, [hours, limit]);
 
-  if (loading) return <TrendingLoadingState hours={hours} />;
-  if (error) return <TrendingErrorState hours={hours} error={error} />;
+  if (loading) {
+    return (
+      <TrendingStateFactory
+        variant="loading"
+        hours={hours}
+        title={t('trending.title')}
+        subtitle={t('trending.subtitle', { hours })}
+      />
+    );
+  }
+  if (error) {
+    return (
+      <TrendingStateFactory
+        variant="error"
+        hours={hours}
+        title={t('trending.title')}
+        subtitle={t('trending.subtitle', { hours })}
+        error={error}
+      />
+    );
+  }
   if (products.length === 0) return null;
 
   return (
     <section className="py-8">
-      <SectionHeader title="Trending Now" subtitle={`Popular items in the last ${hours} hours`} />
+      <SectionHeader title={t('trending.title')} subtitle={t('trending.subtitle', { hours })} />
       <Carousel itemsPerView={5} gap={12}>
         {products.map((product) => {
           const firstColor = product.variants?.[0]?.color;

@@ -9,7 +9,9 @@ import ProductBrand from '@/components/ui/ProductBrand';
 import ProductPrice from '@/components/ui/ProductPrice';
 import ProductRating from '@/components/ui/ProductRating';
 import ProductTitle from '@/components/ui/ProductTitle';
+import { JSON_HEADERS } from '@/constants/http';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
 type ProductCardProps = {
@@ -41,6 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   color,
   isAssistantRecommended = false,
 }) => {
+  const { t } = useLocalization();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
   const { setFavoritesCount } = useFavorites();
@@ -57,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       const response = await fetch('/api/favorites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query: mutation }),
       });
 
@@ -70,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         const countQuery = `{ favorites(userId: ${userId}, activeOnly: true) { id } }`;
         const countResponse = await fetch('/api/favorites', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ query: countQuery }),
         });
         const countResult = await countResponse.json();
@@ -90,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="h-40 mb-4 rounded-md overflow-hidden">
         <img
           src={getProductImageUrl(color, 400, 400)}
-          alt={name || 'Product'}
+          alt={name || t('product.altFallback')}
           className="w-full h-full object-cover"
         />
       </div>
@@ -101,7 +104,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div>
             {isAssistantRecommended && (
               <span className="inline-flex items-center text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded mb-2">
-                Assistant Pick
+                {t('product.assistantPick')}
               </span>
             )}
             <ProductBrand brand={brand} />
@@ -119,7 +122,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             disabled={loading}
             variant="ghost"
             className="p-2 flex-shrink-0 ml-2"
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={
+              isFavorite ? t('product.removeFromFavorites') : t('product.addToFavorites')
+            }
           >
             <Icon name={isFavorite ? 'heart-filled' : 'heart'} size={20} />
           </Button>

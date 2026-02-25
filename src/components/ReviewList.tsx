@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import type { Review } from '@/utils/fetchReviews';
 import { markReviewHelpful } from '@/utils/fetchReviews';
 import Badge from './ui/Badge';
@@ -14,6 +15,7 @@ type ReviewListProps = {
 };
 
 export default function ReviewList({ reviews }: ReviewListProps) {
+  const { t } = useLocalization();
   const handleMarkHelpful = async (reviewId: number) => {
     try {
       await markReviewHelpful(reviewId);
@@ -26,7 +28,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
   return (
     <div className="space-y-4">
       {reviews.length === 0 && (
-        <EmptyState title="No reviews yet" message="Be the first to review this product!" />
+        <EmptyState title={t('reviews.emptyTitle')} message={t('reviews.emptyMessage')} />
       )}
 
       {reviews.length > 0 &&
@@ -36,7 +38,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="font-semibold text-gray-900">{review.username}</span>
-                  {review.verifiedPurchase && <Badge variant="success">Verified Purchase</Badge>}
+                  {review.verifiedPurchase && <Badge variant="success">{t('reviews.verifiedPurchase')}</Badge>}
                 </div>
                 <ProductRating rating={review.rating} />
               </div>
@@ -50,7 +52,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
             {review.comment && <p className="text-gray-700 mb-4">{review.comment}</p>}
 
             <Button variant="ghost" onClick={() => handleMarkHelpful(review.id)}>
-              <Icon name="thumbs-up" size={16} className="mr-1" /> Helpful ({review.helpfulCount})
+              <Icon name="thumbs-up" size={16} className="mr-1" /> {t('reviews.helpful', { count: review.helpfulCount })}
             </Button>
           </Card>
         ))}

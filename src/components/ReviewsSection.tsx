@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocalization } from '@/contexts/LocalizationContext';
 import type { Review } from '@/utils/fetchReviews';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
@@ -24,6 +25,7 @@ export default function ReviewsSection({
   reviews,
   onReviewSubmitted,
 }: ReviewsSectionProps) {
+  const { t } = useLocalization();
   const handleReviewSubmitted = () => {
     onReviewSubmitted?.();
   };
@@ -34,7 +36,7 @@ export default function ReviewsSection({
     <>
       {shouldShowSection && (
         <div className="mt-12 border-t border-gray-200 pt-8">
-          <SectionHeader title="Customer Reviews" />
+          <SectionHeader title={t('reviews.sectionTitle')} />
 
           {/* Rating Summary - only show if reviews exist */}
           {ratingCount > 0 && (
@@ -43,7 +45,7 @@ export default function ReviewsSection({
                 <div className="text-4xl font-bold text-gray-900">{ratingAvg.toFixed(1)}</div>
                 <ProductRating rating={ratingAvg} className="justify-center mt-2" />
                 <div className="text-sm text-gray-500 mt-2">
-                  Based on {ratingCount} review{ratingCount !== 1 ? 's' : ''}
+                  {t('reviews.basedOnReviews', { count: ratingCount })}
                 </div>
               </div>
             </Card>

@@ -14,8 +14,10 @@ import PageShell from '@/components/ui/PageShell';
 import ProductCardCompact from '@/components/ui/ProductCardCompact';
 import Toast from '@/components/ui/Toast';
 import { useToast } from '@/components/ui/useToast';
+import { JSON_HEADERS } from '@/constants/http';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import {
   type CartItem,
   clearCart,
@@ -39,6 +41,7 @@ type Product = {
 };
 
 export default function CartPage() {
+  const { t } = useLocalization();
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
@@ -88,7 +91,7 @@ export default function CartPage() {
 
       const response = await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query, variables: { userId, limit: 4 } }),
       });
 
@@ -129,7 +132,7 @@ export default function CartPage() {
       const addFavoriteMutation = `mutation { addFavorite(userId: ${session.user.id}, productId: ${item.product.id}) { favorite { id } totalCount } }`;
       const favResponse = await fetch('/api/favorites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ query: addFavoriteMutation }),
       });
 
@@ -144,18 +147,18 @@ export default function CartPage() {
         const countQuery = `{ favorites(userId: ${session.user.id}, activeOnly: true) { id } }`;
         const countResponse = await fetch('/api/favorites', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ query: countQuery }),
         });
         const countResult = await countResponse.json();
         const newCount = countResult?.data?.favorites?.length || 0;
         setFavoritesCount(newCount);
 
-        toast.success('Saved for Later', 'Item moved to your favorites');
+        toast.success(t('cart.savedForLaterTitle'), t('cart.savedForLaterMessage'));
       }
     } catch (error) {
       console.error('Error saving for later:', error);
-      toast.error('Failed', 'Could not save item for later');
+      toast.error(t('cart.savedForLaterErrorTitle'), t('cart.savedForLaterErrorMessage'));
     }
   };
 
@@ -163,14 +166,14 @@ export default function CartPage() {
     if (!session?.user?.id) return;
     if (!showClearConfirm) {
       setShowClearConfirm(true);
-      toast.warning('Confirm Action', 'Click Clear Cart again to confirm');
+      toast.warning(t('cart.confirmActionTitle'), t('cart.confirmClearMessage'));
       return;
     }
 
     await clearCart(parseInt(session.user.id, 10));
     loadCart();
     setShowClearConfirm(false);
-    toast.success('Cart Cleared', 'All items removed from your cart');
+    toast.success(t('cart.cartClearedTitle'), t('cart.cartClearedMessage'));
   };
 
   const subtotal: number = cartItems.reduce(
@@ -189,7 +192,7 @@ export default function CartPage() {
       className="flex items-center gap-2 px-3 py-1.5 text-sm"
     >
       <Icon name="trash" size={16} />
-      <span className="font-light">Clear Cart</span>
+      <span className="font-light">{t('cart.clearCart')}</span>
     </Button>
   );
 
@@ -197,7 +200,7 @@ export default function CartPage() {
 
   return (
     <PageShell
-      title="Shopping Cart"
+      title={t('cart.title')}
       requireAuth
       isAuthenticated={!!session?.user}
       loading={loading}
@@ -205,9 +208,9 @@ export default function CartPage() {
     >
       {showEmptyState ? (
         <EmptyState
-          title="Your Shopping Cart is Empty"
-          message="Start shopping to add items to your cart."
-          actionLabel="Browse Products"
+          title={t('cart.emptyTitle')}
+          message={t('cart.emptyMessage')}
+          actionLabel={t('cart.browseProducts')}
           actionHref="/plp"
         />
       ) : (
@@ -216,8 +219,8 @@ export default function CartPage() {
           {recommendations.length > 0 && (
             <div className="mb-4 pb-4 border-b border-gray-200">
               <div className="mb-2">
-                <h2 className="text-base font-bold text-gray-900">Recommended for You</h2>
-                <p className="text-xs text-gray-600">Based on your cart</p>
+                <h2 className="text-base font-bold text-gray-900">{t('cart.recommendedForYou')}</h2>
+                <p className="text-xs text-gray-600">{t('cart.basedOnCart')}</p>
               </div>
               <Carousel itemsPerView={6} gap={12}>
                 {recommendations.map((product) => (
@@ -252,15 +255,17 @@ export default function CartPage() {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card
-                header={<h2 className="text-xl font-bold text-gray-800">Order Summary</h2>}
+                header={
+                  <h2 className="text-xl font-bold text-gray-800">{t('cart.orderSummary')}</h2>
+                }
                 footer={
                   <>
                     <Link href="/checkout" className="block mt-3">
-                      <Button className="w-full">Proceed to Checkout</Button>
+                      <Button className="w-full">{t('cart.proceedToCheckout')}</Button>
                     </Link>
                     <Link href="/plp" className="block mt-3">
                       <Button variant="secondary" className="w-full">
-                        Continue Shopping
+                        {t('cart.continueShopping')}
                       </Button>
                     </Link>
                   </>

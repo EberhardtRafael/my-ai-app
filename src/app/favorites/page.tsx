@@ -2,20 +2,23 @@ import { getServerSession } from 'next-auth';
 import ProductGrid from '@/components/ProductGrid';
 import InfoMessage from '@/components/ui/InfoMessage';
 import PageHeader from '@/components/ui/PageHeader';
+import { getTranslator } from '@/localization';
+import { DEFAULT_LOCALE } from '@/localization/messages';
 import { fetchFavorites } from '@/utils/fetchFavorites';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 
 export default async function FavoritesPage() {
+  const t = getTranslator(DEFAULT_LOCALE);
   const session = await getServerSession(authOptions);
   const isAuthenticated = !!session?.user;
 
   if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-gray-50 p-6">
-        <PageHeader title="My Favorites" />
+        <PageHeader title={t('favoritesPage.title')} />
         <InfoMessage
-          message="Please sign in to view your favorites."
-          linkText="Sign in here"
+          message={t('favoritesPage.signInPrompt')}
+          linkText={t('favoritesPage.signInLink')}
           linkHref="/auth/signin"
         />
       </main>
@@ -29,10 +32,10 @@ export default async function FavoritesPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <PageHeader title="My Favorites" />
+      <PageHeader title={t('favoritesPage.title')} />
       <ProductGrid
         products={favorites.map((fav) => fav.product)}
-        emptyMessage="You haven't added any favorites yet."
+        emptyMessage={t('favoritesPage.emptyMessage')}
       />
     </main>
   );
