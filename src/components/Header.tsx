@@ -7,8 +7,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { CartIcon, ChevronDownIcon, DocumentTextIcon } from '@/icons/HeaderIcons';
-import { HeartIcon } from '@/icons/HeartIcon';
+import { usePlpSearchState } from '@/contexts/PlpSearchStateContext';
+import Icon from '@/components/ui/Icon';
 import Dropdown from './ui/Dropdown';
 import SearchBox from './ui/SearchBox';
 import Toast from './ui/Toast';
@@ -19,6 +19,7 @@ export default function Header() {
   const { data: session } = useSession();
   const { favoritesCount, setFavoritesCount } = useFavorites();
   const { cartItemsCount, setCartItemsCount } = useCart();
+  const { setHasPendingSearch } = usePlpSearchState();
   const toast = useToast();
   const homeText = 'Home';
   const productsText = 'Products';
@@ -84,7 +85,7 @@ export default function Header() {
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, variables: { userId: parseInt(session.user.id) } }),
+        body: JSON.stringify({ query, variables: { userId: parseInt(session.user.id, 10) } }),
       });
       const result = await response.json();
       const items = result?.data?.cart?.items || [];
@@ -105,6 +106,8 @@ export default function Header() {
   };
 
   const onSearch = (searchTerm: string) => {
+    setHasPendingSearch(Boolean(searchTerm.trim()));
+
     const params = new URLSearchParams();
     searchTerm && params.set('search', searchTerm);
     !searchTerm && params.delete('search');
@@ -135,7 +138,7 @@ export default function Header() {
           </Link>
           <Link href="/favorites">
             <Button className="flex items-center gap-2 relative">
-              <HeartIcon className="w-4 h-4" />
+              <Icon name="heart" size={16} />
               <span>Favorites</span>
               {favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -149,10 +152,13 @@ export default function Header() {
               <Link href="/orders">
                 <Button disabled={pathname === '/orders'}>Orders</Button>
               </Link>
+              <Link href="/assistant">
+                <Button disabled={pathname === '/assistant'}>Assistant</Button>
+              </Link>
               <Link href="/tickets">
                 <Button disabled={pathname === '/tickets'}>
                   <span className="flex items-center gap-2">
-                    <DocumentTextIcon />
+                    <Icon name="document-text" size={16} />
                     Tickets
                   </span>
                 </Button>
@@ -179,7 +185,7 @@ export default function Header() {
                     className="p-2 hover:text-gray-500 transition-colors relative"
                     aria-label="Cart"
                   >
-                    <CartIcon />
+                    <Icon name="cart" size={24} />
                     {cartItemsCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {cartItemsCount}
@@ -201,7 +207,7 @@ export default function Header() {
                     <span className="text-sm whitespace-nowrap">
                       {session.user?.name || session.user?.email}
                     </span>
-                    <ChevronDownIcon />
+                    <Icon name="chevron-down" size={16} />
                   </Button>
                 }
               />

@@ -6,7 +6,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { EyeClosedIcon, EyeOpenIcon } from '@/icons/EyeIcon';
+import Icon from '@/components/ui/Icon';
 
 const LoginPage = () => {
   const signInText = 'Sign In';
@@ -69,7 +69,7 @@ const LoginPage = () => {
             variant="ghost"
             className="absolute right-2 top-[60%] -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
           >
-            {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
+            <Icon name={showPassword ? 'eye-open' : 'eye-closed'} size={20} />
           </Button>
         </div>
         {error && (

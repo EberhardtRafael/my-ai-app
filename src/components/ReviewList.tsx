@@ -7,7 +7,7 @@ import Button from './ui/Button';
 import Card from './ui/Card';
 import EmptyState from './ui/EmptyState';
 import ProductRating from './ui/ProductRating';
-import ThumbsUpIcon from '@/icons/ThumbsUpIcon';
+import Icon from '@/components/ui/Icon';
 
 type ReviewListProps = {
   productId: number;
@@ -62,7 +62,7 @@ export default function ReviewList({ productId, reviews }: ReviewListProps) {
             variant="ghost"
             onClick={() => handleMarkHelpful(review.id)}
           >
-            <ThumbsUpIcon /> Helpful ({review.helpfulCount})
+            <Icon name="thumbs-up" size={16} className="mr-1" /> Helpful ({review.helpfulCount})
           </Button>
         </Card>
       ))}

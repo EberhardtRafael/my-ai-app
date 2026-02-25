@@ -9,7 +9,7 @@ import ProductPrice from '@/components/ui/ProductPrice';
 import ProductRating from '@/components/ui/ProductRating';
 import ProductTitle from '@/components/ui/ProductTitle';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { HeartFilledIcon, HeartIcon } from '@/icons/HeartIcon';
+import Icon from '@/components/ui/Icon';
 import { getProductImageUrl } from '@/utils/colorUtils';
 
 type ProductCardProps = {
@@ -24,6 +24,7 @@ type ProductCardProps = {
   userId?: string;
   initialIsFavorite?: boolean;
   color?: string;
+  isAssistantRecommended?: boolean;
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -38,6 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   userId,
   initialIsFavorite = false,
   color,
+  isAssistantRecommended = false,
 }) => {
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
@@ -97,6 +99,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex justify-between items-start">
         <Link href={`/pdp/${id}`} className="flex-1">
           <div>
+            {isAssistantRecommended && (
+              <span className="inline-flex items-center text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded mb-2">
+                Assistant Pick
+              </span>
+            )}
             <ProductBrand brand={brand} />
             <ProductTitle name={name} category={category} />
             <ProductRating rating={ratingAvg} count={ratingCount} className="mt-1" />
@@ -114,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             className="p-2 flex-shrink-0 ml-2"
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            {isFavorite ? <HeartFilledIcon /> : <HeartIcon />}
+            <Icon name={isFavorite ? 'heart-filled' : 'heart'} size={20} />
           </Button>
         )}
       </div>

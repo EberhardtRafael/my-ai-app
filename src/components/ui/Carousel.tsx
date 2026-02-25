@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/icons/NavigationIcons';
+import Icon from '@/components/ui/Icon';
 import Button from './Button';
 import CarouselItems from './CarouselItems';
 import PaginationDots from './PaginationDots';
@@ -71,7 +71,7 @@ const Carousel: React.FC<CarouselProps> = ({
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center border border-gray-200"
           aria-label="Scroll left"
         >
-          <ChevronLeftIcon className="w-6 h-6 text-gray-700" />
+          <Icon name="chevron-left" size={24} className="text-gray-700" />
         </Button>
       )}
 
@@ -95,7 +95,7 @@ const Carousel: React.FC<CarouselProps> = ({
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center border border-gray-200"
           aria-label="Scroll right"
         >
-          <ChevronRightIcon className="w-6 h-6 text-gray-700" />
+          <Icon name="chevron-right" size={24} className="text-gray-700" />
         </Button>
       )}
 

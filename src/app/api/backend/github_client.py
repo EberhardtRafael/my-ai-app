@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import sqlite3
 import json
 import os
+import statistics
 
 class GitHubClient:
     def __init__(self, token: str):
@@ -47,6 +48,25 @@ class GitHubClient:
                 additions INTEGER,
                 deletions INTEGER,
                 UNIQUE(repo_name, branch_name)
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ticket_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                repo_name TEXT NOT NULL,
+                ticket_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                context TEXT,
+                task_description TEXT,
+                estimated_hours REAL,
+                estimate_low REAL,
+                estimate_high REAL,
+                confidence REAL,
+                predicted_commits REAL,
+                github_commits_overall_snapshot INTEGER,
+                merged_prs_snapshot INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
@@ -230,3 +250,160 @@ class GitHubClient:
         
         conn.close()
         return results
+
+    def save_ticket_history(
+        self,
+        repo_name: str,
+        ticket: Dict[str, Any],
+        task_description: str,
+        context: str,
+        repo_stats: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Persist generated ticket data for future analysis"""
+        estimation = ticket.get("estimation", {})
+        metrics = (repo_stats or {}).get("metrics", {})
+        commits = (repo_stats or {}).get("commits", [])
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            '''
+            INSERT INTO ticket_history (
+                repo_name,
+                ticket_id,
+                title,
+                context,
+                task_description,
+                estimated_hours,
+                estimate_low,
+                estimate_high,
+                confidence,
+                predicted_commits,
+                github_commits_overall_snapshot,
+                merged_prs_snapshot
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                repo_name,
+                ticket.get("id", "UNKNOWN"),
+                ticket.get("title", "Untitled Ticket"),
+                context,
+                task_description,
+                estimation.get("hours", 0),
+                estimation.get("range", [0, 0])[0],
+                estimation.get("range", [0, 0])[1],
+                estimation.get("confidence", 0),
+                metrics.get("avg_commits_per_pr", 0),
+                len(commits),
+                metrics.get("total_merged_prs", 0),
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_ticket_history(self, repo_name: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Return ticket generation history for a repository"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute(
+            '''
+            SELECT
+                id,
+                ticket_id,
+                title,
+                context,
+                estimated_hours,
+                estimate_low,
+                estimate_high,
+                confidence,
+                predicted_commits,
+                github_commits_overall_snapshot,
+                merged_prs_snapshot,
+                created_at
+            FROM ticket_history
+            WHERE repo_name = ?
+            ORDER BY datetime(created_at) DESC
+            LIMIT ?
+            ''',
+            (repo_name, limit),
+        )
+
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_ticket_statistics(self, repo_name: str) -> Dict[str, Any]:
+        """Aggregate ticket and GitHub history metrics for planning"""
+        ticket_history = self.get_ticket_history(repo_name, limit=200)
+        historical_tasks = self.get_historical_tasks(repo_name)
+
+        ticket_count = len(ticket_history)
+        estimated_hours = [
+            float(t.get("estimated_hours") or 0) for t in ticket_history if t.get("estimated_hours")
+        ]
+        predicted_commits = [
+            float(t.get("predicted_commits") or 0) for t in ticket_history if t.get("predicted_commits")
+        ]
+
+        actual_merge_times = [
+            float(task.get("time_to_merge_hours") or 0)
+            for task in historical_tasks
+            if task.get("time_to_merge_hours")
+        ]
+        actual_commits = [
+            int(task.get("commits_count") or 0)
+            for task in historical_tasks
+            if task.get("commits_count") is not None
+        ]
+
+        overall_commits = sum(actual_commits)
+        median_actual = statistics.median(actual_merge_times) if actual_merge_times else 0
+        p90_actual = (
+            statistics.quantiles(actual_merge_times, n=10)[8]
+            if len(actual_merge_times) >= 10
+            else (max(actual_merge_times) if actual_merge_times else 0)
+        )
+
+        forecast_hours = 0
+        if estimated_hours and actual_merge_times:
+            forecast_hours = round(
+                (statistics.mean(estimated_hours) * 0.6) + (statistics.mean(actual_merge_times) * 0.4),
+                2,
+            )
+        elif estimated_hours:
+            forecast_hours = round(statistics.mean(estimated_hours), 2)
+        elif actual_merge_times:
+            forecast_hours = round(statistics.mean(actual_merge_times), 2)
+
+        velocity_per_week = 0
+        if ticket_count >= 2:
+            created_times = [
+                datetime.fromisoformat(t["created_at"]) for t in ticket_history if t.get("created_at")
+            ]
+            if len(created_times) >= 2:
+                span_hours = max((max(created_times) - min(created_times)).total_seconds() / 3600, 1)
+                velocity_per_week = round((ticket_count / span_hours) * 24 * 7, 2)
+
+        return {
+            "repo_name": repo_name,
+            "tickets_generated": ticket_count,
+            "github_commits_overall": overall_commits,
+            "avg_commits_per_ticket": round(statistics.mean(predicted_commits), 2)
+            if predicted_commits
+            else 0,
+            "avg_estimated_hours_per_ticket": round(statistics.mean(estimated_hours), 2)
+            if estimated_hours
+            else 0,
+            "avg_actual_merge_time_hours": round(statistics.mean(actual_merge_times), 2)
+            if actual_merge_times
+            else 0,
+            "median_actual_merge_time_hours": round(median_actual, 2) if median_actual else 0,
+            "p90_actual_merge_time_hours": round(p90_actual, 2) if p90_actual else 0,
+            "forecast_hours_next_ticket": forecast_hours,
+            "ticket_velocity_per_week": velocity_per_week,
+            "historical_prs_analyzed": len(historical_tasks),
+        }

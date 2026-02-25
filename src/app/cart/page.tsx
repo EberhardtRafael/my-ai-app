@@ -15,7 +15,7 @@ import Toast from '@/components/ui/Toast';
 import { useToast } from '@/components/ui/useToast';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { TrashIcon } from '@/icons/TrashIcon';
+import Icon from '@/components/ui/Icon';
 import {
   type CartItem,
   clearCart,
@@ -188,7 +188,7 @@ export default function CartPage() {
       variant="ghost"
       className="flex items-center gap-2 px-3 py-1.5 text-sm"
     >
-      <TrashIcon className="w-4 h-4" />
+      <Icon name="trash" size={16} />
       <span className="font-light">Clear Cart</span>
     </Button>
   );

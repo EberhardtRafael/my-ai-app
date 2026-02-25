@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Button from './Button';
-import StarIcon from '@/icons/StarIcon';
+import Icon from '@/components/ui/Icon';
 
 type StarRatingSelectorProps = {
   value: number;
@@ -25,9 +25,9 @@ export default function StarRatingSelector({
           onClick={() => onChange(star)}
           onMouseEnter={() => setHoveredRating(star)}
           onMouseLeave={() => setHoveredRating(0)}
-          className="p-0 text-2xl transition-transform hover:scale-110"
+          className="p-0 transition-transform hover:scale-110"
         >
-          <StarIcon filled={star <= (hoveredRating || value)} />
+          <Icon name="star" size={22} filled={star <= (hoveredRating || value)} />
         </Button>
       ))}
       <span className="ml-2 text-sm text-gray-600">
