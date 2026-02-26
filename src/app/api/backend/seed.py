@@ -1,6 +1,6 @@
 from models import Product, Variant, User, session, init_db
 import random
-import hashlib
+from werkzeug.security import generate_password_hash
 
 # Realistic product data for better ML recommendations
 PRODUCT_CATALOG = {
@@ -93,12 +93,13 @@ def seed_data():
     print("Seeding users...")
     users = [
         {"username": "test", "email": "test@example.com", "password": "test"},
+        {"username": "dev", "email": "dev@example.com", "password": "dev"},
         {"username": "john", "email": "john@example.com", "password": "password123"},
         {"username": "jane", "email": "jane@example.com", "password": "password123"},
     ]
     
     for user_data in users:
-        password_hash = hashlib.sha256(user_data["password"].encode()).hexdigest()
+        password_hash = generate_password_hash(user_data["password"])
         user = User(
             username=user_data["username"],
             email=user_data["email"],

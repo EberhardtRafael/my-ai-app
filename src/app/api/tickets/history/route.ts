@@ -1,7 +1,19 @@
 import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { DEV_MODE_COOKIE_NAME, hasDeveloperAccess } from '@/utils/devMode';
 
 export async function GET(request: Request) {
+  const cookieStore = await cookies();
+  const devModeCookie = cookieStore.get(DEV_MODE_COOKIE_NAME)?.value;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+
+  if (!hasDeveloperAccess({ role, cookieValue: devModeCookie })) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const repo = searchParams.get('repo');
@@ -10,7 +22,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing required query param: repo' }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
     const githubToken = cookieStore.get('github_token')?.value;
 
     if (!githubToken) {

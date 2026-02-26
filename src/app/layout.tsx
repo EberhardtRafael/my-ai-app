@@ -7,6 +7,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { PlpSearchStateProvider } from '@/contexts/PlpSearchStateContext';
+import { ProfileProvider } from '@/contexts/ProfileContext';
 import { getTranslator } from '@/localization';
 import { DEFAULT_LOCALE, messages } from '@/localization/messages';
 
@@ -39,9 +40,11 @@ export default function RootLayout({
           <SessionWrapper>
             <FavoritesProvider>
               <CartProvider>
-                <PlpSearchStateProvider>
-                  <Auth>{children}</Auth>
-                </PlpSearchStateProvider>
+                <ProfileProvider>
+                  <PlpSearchStateProvider>
+                    <Auth>{children}</Auth>
+                  </PlpSearchStateProvider>
+                </ProfileProvider>
               </CartProvider>
             </FavoritesProvider>
           </SessionWrapper>

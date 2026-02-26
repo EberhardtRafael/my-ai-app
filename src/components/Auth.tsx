@@ -10,15 +10,24 @@ export default function Auth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const publicPaths = ['/auth/signin', '/auth/forgot-password', '/auth/reset-password'];
+  const isPublicPath =
+    pathname === '/' ||
+    pathname === '/plp' ||
+    pathname === '/cart' ||
+    pathname === '/checkout' ||
+    pathname.startsWith('/pdp/') ||
+    publicPaths.includes(pathname);
+
   useEffect(() => {
-    if (status === 'unauthenticated' && pathname !== '/auth/signin') {
+    if (status === 'unauthenticated' && !isPublicPath) {
       router.replace('/auth/signin');
     }
-  }, [status, router, pathname]);
+  }, [status, router, isPublicPath]);
 
   const isLoading = status === 'loading';
-  const isUnauthenticated = status === 'unauthenticated' && pathname !== '/auth/signin';
-  const showHeader = pathname !== '/auth/signin';
+  const isUnauthenticated = status === 'unauthenticated' && !isPublicPath;
+  const showHeader = !publicPaths.includes(pathname);
 
   if (isLoading) return <LoadingState />;
   if (isUnauthenticated) return null;

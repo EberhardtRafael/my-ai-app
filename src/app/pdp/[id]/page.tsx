@@ -8,6 +8,7 @@ import SidePanel from '@/components/SidePanel';
 import InfoMessage from '@/components/ui/InfoMessage';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { getProductImageUrl } from '@/utils/colorUtils';
+import { getEffectiveUserId } from '@/utils/guestSessionClient';
 import { getSizeLabel } from '@/utils/productUtils';
 
 type PDPPageProps = {
@@ -20,6 +21,7 @@ export default function PDPPage({ params }: PDPPageProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [cartUserId, setCartUserId] = useState<string | null>(null);
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const { favoritesCount } = useFavorites();
@@ -34,6 +36,15 @@ export default function PDPPage({ params }: PDPPageProps) {
   }, [params]);
 
   // Fetch product data
+  useEffect(() => {
+    const resolveCartUserId = async () => {
+      const resolvedUserId = await getEffectiveUserId(session?.user?.id ?? null);
+      setCartUserId(resolvedUserId);
+    };
+
+    resolveCartUserId();
+  }, [session?.user?.id]);
+
   useEffect(() => {
     if (!id) return;
     fetchProduct();
@@ -126,6 +137,7 @@ export default function PDPPage({ params }: PDPPageProps) {
             <SidePanel
               productId={id}
               userId={userId}
+              cartUserId={cartUserId || undefined}
               initialIsFavorite={isFavorite}
               product={product}
               selectedColor={selectedColor}

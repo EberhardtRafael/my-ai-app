@@ -18,6 +18,7 @@ import { JSON_HEADERS } from '@/constants/http';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useLocalization } from '@/contexts/LocalizationContext';
+import { getEffectiveUserId } from '@/utils/guestSessionClient';
 import {
   type CartItem,
   clearCart,
@@ -44,6 +45,7 @@ export default function CartPage() {
   const { t } = useLocalization();
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { setCartItemsCount } = useCart();
@@ -51,10 +53,19 @@ export default function CartPage() {
   const toast = useToast();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const loadCart = useCallback(async () => {
-    if (!session?.user?.id) return;
+  useEffect(() => {
+    const resolveUserId = async () => {
+      const userId = await getEffectiveUserId(session?.user?.id ?? null);
+      setEffectiveUserId(userId);
+    };
 
-    const data = await fetchCart(parseInt(session.user.id, 10));
+    resolveUserId();
+  }, [session?.user?.id]);
+
+  const loadCart = useCallback(async () => {
+    if (!effectiveUserId) return;
+
+    const data = await fetchCart(parseInt(effectiveUserId, 10));
     const items = data?.data?.cart?.items || [];
     setCartItems(items);
     setLoading(false);
@@ -65,9 +76,9 @@ export default function CartPage() {
 
     // Fetch ML recommendations based on cart
     if (items.length > 0) {
-      loadRecommendations(parseInt(session.user.id, 10));
+      loadRecommendations(parseInt(effectiveUserId, 10));
     }
-  }, [session?.user?.id, setCartItemsCount]);
+  }, [effectiveUserId, setCartItemsCount]);
 
   const loadRecommendations = async (userId: number) => {
     try {
@@ -104,23 +115,24 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    if (!session?.user?.id) {
+    if (!effectiveUserId) {
       setLoading(false);
       return;
     }
 
     loadCart();
-  }, [session?.user?.id, loadCart]);
+  }, [effectiveUserId, loadCart]);
 
   const handleQuantityChange = async (itemId: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1 || !effectiveUserId) return;
 
-    await updateCartItem(itemId, newQuantity);
+    await updateCartItem(parseInt(effectiveUserId, 10), itemId, newQuantity);
     loadCart();
   };
 
   const handleRemoveItem = async (itemId: number) => {
-    await removeFromCart(itemId);
+    if (!effectiveUserId) return;
+    await removeFromCart(parseInt(effectiveUserId, 10), itemId);
     loadCart();
   };
 
@@ -140,7 +152,7 @@ export default function CartPage() {
 
       if (favResult.data) {
         // Remove from cart
-        await removeFromCart(item.id);
+        await removeFromCart(parseInt(session.user.id, 10), item.id);
         loadCart();
 
         // Update favorites count
@@ -163,14 +175,14 @@ export default function CartPage() {
   };
 
   const handleClearCart = async () => {
-    if (!session?.user?.id) return;
+    if (!effectiveUserId) return;
     if (!showClearConfirm) {
       setShowClearConfirm(true);
       toast.warning(t('cart.confirmActionTitle'), t('cart.confirmClearMessage'));
       return;
     }
 
-    await clearCart(parseInt(session.user.id, 10));
+    await clearCart(parseInt(effectiveUserId, 10));
     loadCart();
     setShowClearConfirm(false);
     toast.success(t('cart.cartClearedTitle'), t('cart.cartClearedMessage'));
@@ -201,8 +213,6 @@ export default function CartPage() {
   return (
     <PageShell
       title={t('cart.title')}
-      requireAuth
-      isAuthenticated={!!session?.user}
       loading={loading}
       headerAction={clearCartAction}
     >

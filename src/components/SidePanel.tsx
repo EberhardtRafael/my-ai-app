@@ -30,6 +30,7 @@ type Product = {
 type SidePanelProps = {
   productId?: string;
   userId?: string;
+  cartUserId?: string;
   initialIsFavorite?: boolean;
   product?: Product;
   selectedColor?: string | null;
@@ -42,6 +43,7 @@ type SidePanelProps = {
 const SidePanel: React.FC<SidePanelProps> = ({
   productId,
   userId,
+  cartUserId,
   initialIsFavorite = false,
   product,
   selectedColor,
@@ -104,7 +106,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
   };
 
   const handleAddToCart = async () => {
-    if (!userId || !productId || !selectedColor || !selectedSize) {
+    if (!cartUserId || !productId || !selectedColor || !selectedSize) {
       toast.warning('Selection Required', 'Please select a color and size');
       return;
     }
@@ -144,7 +146,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
         body: JSON.stringify({
           query: mutation,
           variables: {
-            userId: Number.parseInt(userId, 10),
+            userId: Number.parseInt(cartUserId, 10),
             productId: Number.parseInt(productId, 10),
             variantId: variant.id,
             quantity: 1,
@@ -190,7 +192,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: cartQuery,
-          variables: { userId: Number.parseInt(userId, 10) },
+          variables: { userId: Number.parseInt(cartUserId, 10) },
         }),
       });
       const cartResult = await cartResponse.json();
@@ -236,7 +238,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
     <Button
       className="w-full text-sm"
       onClick={handleAddToCart}
-      disabled={addingToCart || !userId || !selectedColor || !selectedSize}
+      disabled={addingToCart || !cartUserId || !selectedColor || !selectedSize}
     >
       {addingToCart ? 'Adding...' : 'Add to Cart'}
     </Button>
