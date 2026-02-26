@@ -53,6 +53,13 @@ class TestProductModel:
             assert hasattr(product, 'category')
             assert hasattr(product, 'price')
 
+    def test_product_has_related_links(self, db_session):
+        """Test that product model exposes many-to-many related product links"""
+        product = db_session.query(Product).first()
+        if product:
+            assert hasattr(product, 'related_links')
+            assert hasattr(product, 'reverse_related_links')
+
 
 class TestVariantModel:
     """Test the Variant model"""

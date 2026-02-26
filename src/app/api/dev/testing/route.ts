@@ -13,7 +13,14 @@ const execAsync = promisify(exec);
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type CommandId = 'frontend' | 'frontend-coverage' | 'backend' | 'all';
+type CommandId =
+  | 'frontend'
+  | 'frontend-coverage'
+  | 'backend'
+  | 'all'
+  | 'smoke-frontend'
+  | 'smoke-backend'
+  | 'smoke-all';
 
 type TestCommand = {
   id: CommandId;
@@ -66,6 +73,27 @@ const TEST_COMMANDS: Record<CommandId, TestCommand> = {
     description: 'Runs Python backend tests with verbose output.',
     command: 'yarn test:python',
     parser: 'pytest',
+  },
+  'smoke-frontend': {
+    id: 'smoke-frontend',
+    label: 'Smoke: Frontend critical paths',
+    description: 'Runs a fast frontend smoke suite for key user-surface behaviors.',
+    command: 'yarn test:smoke:frontend',
+    parser: 'jest',
+  },
+  'smoke-backend': {
+    id: 'smoke-backend',
+    label: 'Smoke: Backend API critical paths',
+    description: 'Runs core GraphQL API smoke checks including PDP related-products query.',
+    command: 'yarn test:smoke:backend',
+    parser: 'pytest',
+  },
+  'smoke-all': {
+    id: 'smoke-all',
+    label: 'Smoke: Full critical flow',
+    description: 'Runs frontend and backend smoke suites sequentially.',
+    command: 'yarn test:smoke',
+    parser: 'mixed',
   },
   all: {
     id: 'all',

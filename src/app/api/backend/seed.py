@@ -1,4 +1,5 @@
-from models import Product, Variant, User, session, init_db
+from sqlalchemy import func
+from models import Product, ProductRelation, Variant, Review, User, session, init_db
 import random
 from werkzeug.security import generate_password_hash
 
@@ -134,8 +135,8 @@ def seed_data():
                     brand=brand,
                     material=item_template['material'],
                     tags=item_template['tags'],
-                    rating_avg=round(random.uniform(3.5, 5.0), 1),  # Most products rated 3.5-5 stars
-                    rating_count=random.randint(10, 500),
+                    rating_avg=0.0,
+                    rating_count=0,
                     sales_count=random.randint(0, 1000),
                     image_url=f"/images/products/{category.lower()}/{product_id}.jpg"
                 )
@@ -167,6 +168,119 @@ def seed_data():
     
     session.commit()
     print(f"Database seeded with {product_id - 1} products with rich attributes for ML!")
+
+    print("Syncing product ratings from real reviews only...")
+    sync_product_ratings_from_reviews()
+    print("Product ratings synced")
+
+    print("Seeding product relations for PDP related-products feature...")
+    seed_product_relations()
+    print("Product relations seeded")
+
+
+def _relation_pair_key(product_id: int, related_product_id: int) -> tuple[int, int]:
+    return (min(product_id, related_product_id), max(product_id, related_product_id))
+
+
+def _add_bidirectional_relation(product_id: int, related_product_id: int, relation_type: str, seen_pairs: set):
+    if product_id == related_product_id:
+        return
+
+    pair_key = _relation_pair_key(product_id, related_product_id)
+    if pair_key in seen_pairs:
+        return
+
+    seen_pairs.add(pair_key)
+    session.add(
+        ProductRelation(
+            product_id=product_id,
+            related_product_id=related_product_id,
+            relation_type=relation_type,
+        )
+    )
+    session.add(
+        ProductRelation(
+            product_id=related_product_id,
+            related_product_id=product_id,
+            relation_type=relation_type,
+        )
+    )
+
+
+def _tags_set(tags: str | None) -> set[str]:
+    if not tags:
+        return set()
+    return {token.strip().lower() for token in tags.split(',') if token.strip()}
+
+
+def seed_product_relations():
+    session.query(ProductRelation).delete()
+    session.commit()
+
+    products = session.query(Product).order_by(Product.id).all()
+    products_by_category: dict[str, list[Product]] = {}
+    for product in products:
+        products_by_category.setdefault(product.category or "", []).append(product)
+
+    seen_pairs = set()
+
+    for category_products in products_by_category.values():
+        for product in category_products:
+            same_category_candidates = [candidate for candidate in category_products if candidate.id != product.id]
+
+            collection_candidates = [
+                candidate
+                for candidate in same_category_candidates
+                if product.brand and candidate.brand and product.brand == candidate.brand
+            ][:3]
+
+            dependency_candidates = [
+                candidate
+                for candidate in same_category_candidates
+                if (
+                    (product.material and candidate.material and product.material == candidate.material)
+                    or len(_tags_set(product.tags) & _tags_set(candidate.tags)) >= 2
+                )
+            ][:3]
+
+            bundle_candidates = [
+                candidate
+                for candidate in same_category_candidates
+                if max(product.price or 1, candidate.price or 1) > 0
+                and abs((product.price or 0) - (candidate.price or 0)) / max(product.price or 1, candidate.price or 1) <= 0.30
+            ][:2]
+
+            for candidate in collection_candidates:
+                _add_bidirectional_relation(product.id, candidate.id, "collection", seen_pairs)
+            for candidate in dependency_candidates:
+                _add_bidirectional_relation(product.id, candidate.id, "dependency", seen_pairs)
+            for candidate in bundle_candidates:
+                _add_bidirectional_relation(product.id, candidate.id, "bundle", seen_pairs)
+
+    session.commit()
+
+
+def sync_product_ratings_from_reviews():
+    review_aggregates = {
+        product_id: (count, avg_rating or 0.0)
+        for product_id, count, avg_rating in (
+            session.query(
+                Review.product_id,
+                func.count(Review.id),
+                func.avg(Review.rating),
+            )
+            .group_by(Review.product_id)
+            .all()
+        )
+    }
+
+    products = session.query(Product).all()
+    for product in products:
+        count, avg_rating = review_aggregates.get(product.id, (0, 0.0))
+        product.rating_count = int(count or 0)
+        product.rating_avg = float(avg_rating or 0.0)
+
+    session.commit()
 
 if __name__ == "__main__":
     seed_data()

@@ -1,6 +1,6 @@
 import InfoMessage from '@/components/ui/InfoMessage';
 import StatCard from '@/components/ui/StatCard';
-import type { TicketStats } from '../types';
+import type { RepoStatsSnapshot, TicketStats } from '../types';
 
 type AnalyticsStat = {
   label: string;
@@ -17,8 +17,10 @@ const formatHours = (hours: number) => `${Number(hours || 0).toFixed(1)}h`;
 
 export default function TicketAnalyticsOverview({
   ticketStats,
+  repoStatsSnapshot,
 }: {
   ticketStats: TicketStats | null;
+  repoStatsSnapshot?: RepoStatsSnapshot | null;
 }) {
   const analyticsStats: AnalyticsStat[] = ticketStats
     ? [
@@ -39,6 +41,10 @@ export default function TicketAnalyticsOverview({
           label: 'Forecast Next Ticket',
           value: formatHours(ticketStats.forecast_hours_next_ticket),
           align: 'right',
+        },
+        {
+          label: 'Historical PRs Analyzed',
+          value: ticketStats.historical_prs_analyzed,
         },
       ]
     : [];
@@ -82,6 +88,31 @@ export default function TicketAnalyticsOverview({
                   {benchmark.label}: <span className="font-semibold">{benchmark.value}</span>
                 </p>
               ))}
+            </div>
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-600 mb-2">Repository Evidence Used</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <p>
+                Repo:{' '}
+                <span className="font-semibold">{repoStatsSnapshot?.repo_name || 'N/A'}</span>
+              </p>
+              <p>
+                Snapshot avg merge:{' '}
+                <span className="font-semibold">
+                  {formatHours(repoStatsSnapshot?.avg_time_to_merge || 0)}
+                </span>
+              </p>
+              <p>
+                Historical PRs used:{' '}
+                <span className="font-semibold">
+                  {ticketStats.historical_prs_analyzed || repoStatsSnapshot?.total_branches_analyzed || 0}
+                </span>
+              </p>
+              <p>
+                Data freshness: <span className="font-semibold">{repoStatsSnapshot?.cache_age || 'N/A'}</span>
+              </p>
             </div>
           </div>
         </>

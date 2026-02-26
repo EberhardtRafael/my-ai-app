@@ -74,18 +74,24 @@ Format in markdown with proper headers and checkboxes."""
     def _generate_template_ticket(self, task_description: str, context: str, 
                                    estimation: Dict, similar_tasks: Optional[list]) -> str:
         """Generate ticket using template (fallback when LLM not available)"""
-        
+        cleaned_task_description = self._normalize_prompt_text(task_description)
+
         # Extract a title from description
-        title = self._extract_title(task_description)
+        title = self._extract_title(cleaned_task_description)
         ticket_id = self._generate_ticket_id()
-        acceptance_criteria = self._extract_acceptance_criteria(task_description)
-        risk_section = self._build_risk_section(task_description)
-        related_components = self._extract_related_components(task_description)
-        dependencies = self._extract_dependencies(task_description)
-        implementation_plan = self._build_implementation_plan(task_description, context)
-        testing_requirements = self._build_testing_requirements(task_description, context)
-        priority = self._determine_priority(task_description, estimation)
-        definition_of_done = self._build_definition_of_done(task_description, context)
+        acceptance_criteria = self._extract_acceptance_criteria(cleaned_task_description)
+        risk_section = self._build_risk_section(cleaned_task_description)
+        related_components = self._extract_related_components(cleaned_task_description)
+        dependencies = self._extract_dependencies(cleaned_task_description)
+        implementation_plan = self._build_implementation_plan(cleaned_task_description, context)
+        task_breakdown = self._build_task_breakdown(cleaned_task_description, context)
+        testing_requirements = self._build_testing_requirements(cleaned_task_description, context)
+        priority = self._determine_priority(cleaned_task_description, estimation)
+        definition_of_done = self._build_definition_of_done(cleaned_task_description, context)
+
+        estimation_range = estimation.get('range', [estimation.get('hours', 0), estimation.get('hours', 0)])
+        range_low = min(estimation_range[0], estimation_range[1])
+        range_high = max(estimation_range[0], estimation_range[1])
         
         similar_section = ""
         if similar_tasks:
@@ -98,7 +104,7 @@ Format in markdown with proper headers and checkboxes."""
         estimation_breakdown = f"""## Estimation Breakdown
 
 **Total Estimated Time:** {estimation['hours']} hours
-**Range:** {estimation['range'][0]}-{estimation['range'][1]} hours
+**Range:** {range_low}-{range_high} hours
 **Confidence Level:** {estimation['confidence']*100:.0f}%
 
 **Factors:**
@@ -119,12 +125,12 @@ Format in markdown with proper headers and checkboxes."""
 ## User Story
 
 As a developer/user,  
-I want {task_description.lower()[:100]}{'...' if len(task_description) > 100 else ''}  
+I want {cleaned_task_description.lower()[:100]}{'...' if len(cleaned_task_description) > 100 else ''}  
 So that the application has improved functionality and user experience.
 
 ## Task Description
 
-{task_description}
+{cleaned_task_description}
 
 ## Acceptance Criteria
 
@@ -136,6 +142,10 @@ So that the application has improved functionality and user experience.
 
 **Recommended Approach:**
 {implementation_plan}
+
+## Implementation Breakdown
+
+{task_breakdown}
 
 **Considerations:**
 - Maintain backward compatibility
@@ -169,8 +179,50 @@ So that the application has improved functionality and user experience.
 """
         return ticket
 
+    def _normalize_prompt_text(self, text: str) -> str:
+        """Apply lightweight typo and grammar cleanup for clearer generated tickets."""
+        cleaned = re.sub(r'\s+', ' ', (text or '').strip())
+        if not cleaned:
+            return "New feature implementation"
+
+        typo_map = {
+            'prtoject': 'project',
+            'projcet': 'project',
+            'teh': 'the',
+            'recieve': 'receive',
+            'seperate': 'separate',
+            'definately': 'definitely',
+            'wierd': 'weird',
+            'enviroment': 'environment',
+            'dependancies': 'dependencies',
+        }
+
+        for typo, correction in typo_map.items():
+            cleaned = re.sub(rf'\b{re.escape(typo)}\b', correction, cleaned, flags=re.IGNORECASE)
+
+        cleaned = re.sub(r'\b(I|i)\s+want\s+add\b', 'I want to add', cleaned)
+        cleaned = re.sub(r'\b(I|i)\s+need\s+add\b', 'I need to add', cleaned)
+        cleaned = re.sub(r'\b(We|we)\s+need\s+add\b', 'We need to add', cleaned)
+        cleaned = re.sub(r'\b(We|we)\s+want\s+add\b', 'We want to add', cleaned)
+
+        cleaned = cleaned[0].upper() + cleaned[1:] if cleaned else cleaned
+        return cleaned
+
     def _extract_acceptance_criteria(self, description: str) -> str:
         """Create task-specific acceptance criteria from description text"""
+        lowered_description = description.lower()
+
+        if 'related products' in lowered_description and 'pdp' in lowered_description:
+            return "\n".join([
+                "- [ ] PDP shows a Related Products section for products with configured relations",
+                "- [ ] Backend returns related products through a dedicated API/GraphQL field",
+                "- [ ] Product relation model supports many-to-many product links",
+                "- [ ] Related Products UI renders mini-PLP style cards with required metadata",
+                "- [ ] Filters (when provided) update the related products list correctly",
+                "- [ ] Empty/fallback state appears when no related products are available",
+                "- [ ] Unit/integration tests cover backend relation query and PDP rendering",
+            ])
+
         segments = [segment.strip() for segment in re.split(r'[\n\.;]+', description) if segment.strip()]
         criteria: List[str] = []
 
@@ -327,6 +379,61 @@ So that the application has improved functionality and user experience.
 
         return "\n".join(checks[:8])
 
+    def _build_task_breakdown(self, description: str, context: str) -> str:
+        """Build actionable work packages instead of generic text."""
+        lowered = description.lower()
+        items: List[str] = []
+
+        if 'related products' in lowered and 'pdp' in lowered:
+            items.extend([
+                "### Backend",
+                "- [ ] Add/validate many-to-many product relation model and migration",
+                "- [ ] Expose `relatedProducts(productId, limit, filters)` query in API",
+                "- [ ] Add fallback strategy when no explicit related products exist",
+                "",
+                "### Frontend",
+                "- [ ] Add Related Products section component on PDP",
+                "- [ ] Render mini-PLP style product grid with loading/empty states",
+                "- [ ] Add filter controls required for the mini-PLP scope",
+                "",
+                "### Integration",
+                "- [ ] Connect PDP data fetch to backend related-products query",
+                "- [ ] Verify pagination/limit behavior and consistent product card rendering",
+            ])
+
+        if any(keyword in lowered for keyword in ['database', 'migration', 'schema', 'many to many']):
+            items.extend([
+                "",
+                "### Data",
+                "- [ ] Document schema change and rollback path",
+                "- [ ] Seed/update test data for new relations",
+            ])
+
+        if context.lower() in ['full-stack', 'frontend'] and not any('### Frontend' in x for x in items):
+            items.extend([
+                "",
+                "### Frontend",
+                "- [ ] Build UI behavior and wire state transitions",
+                "- [ ] Add user feedback for loading/error/success states",
+            ])
+
+        if context.lower() in ['full-stack', 'backend'] and not any('### Backend' in x for x in items):
+            items.extend([
+                "",
+                "### Backend",
+                "- [ ] Implement API/data logic with validation and error handling",
+                "- [ ] Add telemetry/logging for key actions and failures",
+            ])
+
+        if not items:
+            items = [
+                "- [ ] Define final API/UI contract",
+                "- [ ] Implement core behavior",
+                "- [ ] Add tests and docs for changed behavior",
+            ]
+
+        return "\n".join(items).strip()
+
     def _determine_priority(self, description: str, estimation: Dict) -> str:
         """Infer a lightweight priority tier from risk/urgency language and effort"""
         lowered = description.lower()
@@ -370,13 +477,33 @@ So that the application has improved functionality and user experience.
     
     def _extract_title(self, description: str) -> str:
         """Extract a concise title from description"""
+        description_lower = description.lower()
+
+        if 'related products' in description_lower and 'pdp' in description_lower:
+            if any(keyword in description_lower for keyword in ['many-to-many', 'data model', 'schema', 'database']):
+                return 'Implement PDP related-products data model and relations'
+            if any(keyword in description_lower for keyword in ['api', 'graphql', 'query', 'endpoint']):
+                return 'Implement PDP related-products API and query integration'
+            if any(keyword in description_lower for keyword in ['filter', 'mini plp', 'cards', 'ui', 'component']):
+                return 'Implement PDP related-products mini-PLP UI with filters'
+            return 'Implement PDP related-products section end to end'
+
         first_sentence = description.split('.')[0].split('\n')[0].strip()
 
         if not first_sentence:
             return "New Feature Implementation"
 
         cleaned = re.sub(r'\s+', ' ', first_sentence)
-        cleaned = re.sub(r'^(please\s+|can you\s+|i want to\s+|we need to\s+)', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(
+            r'^(please\s+|can you\s+|i want to\s+|i need to\s+|we need to\s+|let\'s\s+)',
+            '',
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.split(r'\b(which means|that means|then|basically)\b', cleaned, flags=re.IGNORECASE)[0]
+        cleaned = re.sub(r'\b(i\'m|im|we\'re|were)\s+gonna\s+', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\b(gonna|going to|have to|need to)\b', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip(' ,.-:')
 
         action_prefixes = [
             'add', 'implement', 'create', 'build', 'fix', 'improve', 'update', 'refactor', 'support', 'enable'
@@ -388,10 +515,14 @@ So that the application has improved functionality and user experience.
         elif cleaned:
             cleaned = cleaned[0].upper() + cleaned[1:]
 
+        words = cleaned.split()
+        if len(words) > 10:
+            cleaned = ' '.join(words[:10])
+
         title = cleaned[:72].strip(' -:')
         return title if title else "New Feature Implementation"
     
     def _generate_ticket_id(self) -> str:
         """Generate a ticket ID"""
-        timestamp = datetime.now().strftime('%Y%m%d%H%M')
-        return f"TICKET-{timestamp[-6:]}"
+        timestamp = datetime.now().strftime('%y%m%d%H%M%S')
+        return f"TICKET-{timestamp}"

@@ -463,7 +463,9 @@ export default function ProductList({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
-      <FilterSidebar sections={filterSections} />
+      <aside className="pt-11">
+        <FilterSidebar sections={filterSections} />
+      </aside>
 
       <section>
         <div className="mb-3 flex min-h-8 justify-end">
