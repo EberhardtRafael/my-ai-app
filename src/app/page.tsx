@@ -18,25 +18,27 @@ export default function Home() {
   const { displayName } = useProfile();
   const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const sessionUserId = session?.user?.id;
 
   useEffect(() => {
     const loadRecommendations = async () => {
-      if (session?.user?.id) {
+      try {
         setLoading(true);
-        const products = await fetchRecommendations(Number(session.user.id), 12);
-        setRecommendations(products);
-        setLoading(false);
-      } else {
-        // For logged-out users, still fetch trending products (user_id=1 as guest)
-        setLoading(true);
-        const products = await fetchRecommendations(1, 12);
-        setRecommendations(products);
+
+        if (sessionUserId) {
+          const products = await fetchRecommendations(Number(sessionUserId), 12);
+          setRecommendations(products);
+        } else {
+          const products = await fetchRecommendations(1, 12);
+          setRecommendations(products);
+        }
+      } finally {
         setLoading(false);
       }
     };
 
     loadRecommendations();
-  }, [session]);
+  }, [sessionUserId]);
 
   // Business logic: Compute title and subtitle based on session
   const title = displayName
@@ -46,7 +48,7 @@ export default function Home() {
     ? t('homePage.subtitlePersonalized')
     : t('homePage.subtitleTrending');
 
-  const loadingSkeletons = Array.from({ length: 8 }, (_, i) => `loading-skeleton-${Date.now()}-${i}`);
+  const loadingSkeletons = Array.from({ length: 8 }, (_, i) => `loading-skeleton-${i}`);
 
   return (
     <main className="min-h-screen flex flex-col p-6 bg-gray-50">

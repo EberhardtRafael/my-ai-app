@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import StatusMessage from '@/components/ui/StatusMessage';
 import type { ChatMessage } from '../types';
@@ -6,17 +7,35 @@ import AssistantQuickLinksList from './AssistantQuickLinksList';
 type AssistantMessageListProps = {
   messages: ChatMessage[];
   isLoading: boolean;
+  fill?: boolean;
   className?: string;
 };
 
 export default function AssistantMessageList({
   messages,
   isLoading,
+  fill = false,
   className = '',
 }: AssistantMessageListProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [messages, isLoading]);
+
   return (
     <div
-      className={`h-[460px] space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 ${className}`}
+      ref={containerRef}
+      className={`${fill ? 'flex-1 min-h-0' : 'h-[460px]'} space-y-3 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 bg-white p-4 ${className}`}
     >
       {messages.map((message) => (
         <div key={message.id}>

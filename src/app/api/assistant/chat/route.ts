@@ -235,7 +235,7 @@ const RULE_BOOSTS: Record<AssistantIntent, RegExp[]> = {
   pricing: [/\b(price|cost|budget|cheap|expensive|under\s+\d+|below\s+\d+)\b/],
   recommendation: [/\b(recommend|suggest|similar|best for me|for you)\b/],
   site_help: [
-    /\b(order|cart|checkout|favorite|favorites|ticket|tickets|account|login|sign in|how do i)\b/,
+    /\b(order|cart|checkout|favorite|favorites|ticket|tickets|account|login|sign in|profile|role|dev mode|developer mode|token|session|expire|expiry|testing|tests?|qa|how do i)\b/,
   ],
   fallback: [],
 };
@@ -855,6 +855,36 @@ async function fetchProductsWithFallback(
 function buildSiteHelpReply(message: string): string {
   const text = message.toLowerCase();
 
+  if (
+    text.includes('role') ||
+    text.includes('dev mode') ||
+    text.includes('developer mode') ||
+    text.includes('permission')
+  ) {
+    return 'This app supports user and dev roles. Dev mode availability depends on your role, and when enabled it unlocks Tickets and the Dev Testing page.';
+  }
+
+  if (text.includes('profile')) {
+    return 'Open the Profile page from the user dropdown to view and manage account details.';
+  }
+
+  if (
+    text.includes('token') ||
+    text.includes('session') ||
+    text.includes('expire') ||
+    text.includes('expiry')
+  ) {
+    return 'Auth uses JWT sessions. Session and JWT max age are 8 hours, with a 30-minute update age, so tokens refresh periodically while active.';
+  }
+
+  if (text.includes('testing') || text.includes('test page') || text.includes('qa')) {
+    return 'When dev mode is enabled, use the Dev Testing page for testing workflows. You can also run automated tests with npm scripts like test, test:coverage, and test:smoke.';
+  }
+
+  if (text.includes('test') || text.includes('jest') || text.includes('pytest')) {
+    return 'Available tests include frontend Jest tests and backend Python pytest suites. Common commands: npm test, npm run test:coverage, npm run test:smoke, npm run test:python, and npm run test:all.';
+  }
+
   if (text.includes('buy') || text.includes('purchase') || text.includes('shop')) {
     return 'To buy: go to Products, open an item, choose options, add to cart, then checkout from the Cart page.';
   }
@@ -872,10 +902,10 @@ function buildSiteHelpReply(message: string): string {
     return 'The Tickets page can generate implementation tickets and now includes analytics/history.';
   }
   if (text.includes('login') || text.includes('sign in') || text.includes('account')) {
-    return 'Use Sign In from the header menu to access personalized recommendations and your account data.';
+    return 'Use Sign In from the header menu or /auth/signin to access personalized recommendations, profile, orders, and role-based dev features.';
   }
 
-  return 'I can help with products, orders, cart/checkout, favorites, tickets, and account navigation.';
+  return 'I can help with products, orders, cart/checkout, favorites, tickets, sign-in/profile, roles/dev mode, token/session behavior, and testing workflows.';
 }
 
 function buildConversationalReply(
@@ -971,8 +1001,8 @@ function buildPersonalizedSuggestions(styleProfile: UserStyleProfile): string[] 
     return [
       'How do I buy a shirt on this site?',
       'Where can I track my orders?',
-      'How do favorites work?',
-      'How can I generate ticket analytics?',
+      'How do roles and dev mode work?',
+      'How long do auth tokens/sessions last?',
     ];
   }
 
@@ -1050,6 +1080,21 @@ function buildQuickLinks(
   }
   if (text.includes('ticket')) {
     links.push({ label: 'Open tickets', href: '/tickets', kind: 'location' });
+  }
+  if (text.includes('profile') || text.includes('account')) {
+    links.push({ label: 'Open profile', href: '/profile', kind: 'location' });
+  }
+  if (text.includes('login') || text.includes('sign in')) {
+    links.push({ label: 'Open sign in', href: '/auth/signin', kind: 'location' });
+  }
+  if (
+    text.includes('role') ||
+    text.includes('dev mode') ||
+    text.includes('developer mode') ||
+    text.includes('testing') ||
+    text.includes('test')
+  ) {
+    links.push({ label: 'Open dev testing', href: '/dev/testing', kind: 'location' });
   }
 
   if (intent === 'site_help' && !text.includes('checkout') && !text.includes('order')) {
