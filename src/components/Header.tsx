@@ -277,9 +277,6 @@ export default function Header() {
               <Link href="/orders">
                 <Button disabled={pathname === '/orders'}>{t('common.orders')}</Button>
               </Link>
-              <Link href="/assistant">
-                <Button disabled={pathname === '/assistant'}>{t('common.assistant')}</Button>
-              </Link>
               {devModeState.enabled && (
                 <>
                   <Link href="/tickets">
@@ -350,7 +347,9 @@ export default function Header() {
                     variant="ghost"
                     className="flex items-center gap-2 px-3 py-2"
                   >
-                    <span className="text-sm whitespace-nowrap">{displayName || session.user?.email}</span>
+                    <span className="text-sm whitespace-nowrap">
+                      {displayName || session.user?.email}
+                    </span>
                     <Icon name="chevron-down" size={16} />
                   </Button>
                 }

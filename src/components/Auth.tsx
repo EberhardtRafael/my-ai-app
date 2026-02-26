@@ -2,6 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
+import AssistantFloatingWidget from './AssistantFloatingWidget';
 import Header from './Header';
 import LoadingState from './LoadingState';
 
@@ -36,6 +37,7 @@ export default function Auth({ children }: { children: React.ReactNode }) {
     <>
       {showHeader && <Header />}
       {children}
+      <AssistantFloatingWidget />
     </>
   );
 }
