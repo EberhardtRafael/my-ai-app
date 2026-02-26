@@ -69,34 +69,40 @@ export default function TicketHistoryTable({
   ticketHistory: TicketHistoryEntry[];
 }) {
   return (
-    <TableWrapper>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {columns.map((column) => (
-              <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {ticketHistory.length === 0 && (
-            <TableEmptyState
-              message="No ticket history yet. Generate your first ticket to start tracking progress."
-              colSpan={columns.length}
-            />
-          )}
-          {ticketHistory.length > 0 &&
-            ticketHistory.map((entry) => (
-              <TableRow key={entry.id} className="border-t border-gray-100">
-                {columns.map((column) => (
-                  <TableCell key={`${entry.id}-${column.key}`}>
-                    {column.renderCell(entry)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-        </TableBody>
-      </Table>
-    </TableWrapper>
+    <div>
+      <p className="text-sm font-semibold text-gray-900 mb-1">Generated Ticket History</p>
+      <p className="text-xs text-gray-600 mb-3">
+        Each row is a separate ticket generation run, not subtasks from a single ticket.
+      </p>
+      <TableWrapper>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {ticketHistory.length === 0 && (
+              <TableEmptyState
+                message="No ticket history yet. Generate your first ticket to start tracking progress."
+                colSpan={columns.length}
+              />
+            )}
+            {ticketHistory.length > 0 &&
+              ticketHistory.map((entry) => (
+                <TableRow key={entry.id} className="border-t border-gray-100">
+                  {columns.map((column) => (
+                    <TableCell key={`${entry.id}-${column.key}`}>
+                      {column.renderCell(entry)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </TableWrapper>
+    </div>
   );
 }

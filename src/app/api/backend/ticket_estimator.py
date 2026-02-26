@@ -128,14 +128,14 @@ class TicketEstimator:
             distribution_stats = self._analyze_distribution(historical_tasks)
         
         result = {
-            "hours": estimated_hours,
-            "range": [max(0.5, range_low), range_high],
-            "confidence": confidence,
+            "hours": float(estimated_hours),
+            "range": [float(max(0.5, range_low)), float(range_high)],
+            "confidence": float(confidence),
             "factors": {
-                "base_hours": round(base_hours, 2),
+                "base_hours": float(round(base_hours, 2)),
                 "complexity": complexity_category,
-                "complexity_adjustment": round(complexity_adjustment, 2),
-                "scope_adjustment": round(scope_adjustment, 2),
+                "complexity_adjustment": float(round(complexity_adjustment, 2)),
+                "scope_adjustment": float(round(scope_adjustment, 2)),
                 "method": method
             }
         }
@@ -358,17 +358,17 @@ class TicketEstimator:
         # Test for normality (Shapiro-Wilk test)
         if len(times_clean) >= 3:
             _, p_value = stats.shapiro(times_clean)
-            is_normal = p_value > 0.05
+            is_normal = bool(p_value > 0.05)
         else:
             is_normal = False
         
         # Calculate percentiles
         percentiles = {
-            'p10': round(np.percentile(times_clean, 10), 1),
-            'p25': round(np.percentile(times_clean, 25), 1),
-            'p50': round(np.percentile(times_clean, 50), 1),
-            'p75': round(np.percentile(times_clean, 75), 1),
-            'p90': round(np.percentile(times_clean, 90), 1),
+            'p10': float(round(np.percentile(times_clean, 10), 1)),
+            'p25': float(round(np.percentile(times_clean, 25), 1)),
+            'p50': float(round(np.percentile(times_clean, 50), 1)),
+            'p75': float(round(np.percentile(times_clean, 75), 1)),
+            'p90': float(round(np.percentile(times_clean, 90), 1)),
         }
         
         # Skewness (asymmetry of distribution)
@@ -377,7 +377,7 @@ class TicketEstimator:
         return {
             'is_normal_distribution': is_normal,
             'percentiles': percentiles,
-            'skewness': round(skewness, 2),
+            'skewness': float(round(skewness, 2)),
             'interpretation': self._interpret_skewness(skewness)
         }
     

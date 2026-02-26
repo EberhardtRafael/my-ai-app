@@ -6,7 +6,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import GeneratedTicketPanel from './components/GeneratedTicketPanel';
 import TicketAnalyticsCard from './components/TicketAnalyticsCard';
 import TicketSetupPanel from './components/TicketSetupPanel';
-import type { GeneratedTicket, TicketHistoryEntry, TicketStats } from './types';
+import type { GeneratedTicket, RepoStatsSnapshot, TicketHistoryEntry, TicketStats } from './types';
 
 const normalizeRepoInput = (repo: string) =>
   repo.replace('https://github.com/', '').replace('http://github.com/', '').replace('.git', '');
@@ -20,30 +20,35 @@ const TicketsClientPage = () => {
   const [githubUsername, setGithubUsername] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedTicket, setGeneratedTicket] = useState<GeneratedTicket | null>(null);
+  const [repoStatsSnapshot, setRepoStatsSnapshot] = useState<RepoStatsSnapshot | null>(null);
   const [ticketHistory, setTicketHistory] = useState<TicketHistoryEntry[]>([]);
   const [ticketStats, setTicketStats] = useState<TicketStats | null>(null);
   const [isLoadingInsights, setIsLoadingInsights] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  // Check for OAuth callback
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    const errorParam = searchParams.get('error');
-
-    if (connected === 'true') {
-      // Check for github_username cookie
-      const cookies = document.cookie.split(';');
-      const usernameCookie = cookies.find((c) => c.trim().startsWith('github_username='));
-      if (usernameCookie) {
-        const username = usernameCookie.split('=')[1];
-        setGithubUsername(username);
-        setIsConnected(true);
+    const hydrateGithubConnection = async () => {
+      const errorParam = searchParams.get('error');
+      if (errorParam) {
+        setError(`Authentication failed: ${errorParam}`);
       }
-    }
 
-    if (errorParam) {
-      setError(`Authentication failed: ${errorParam}`);
-    }
+      try {
+        const response = await fetch('/api/tickets/auth', { cache: 'no-store' });
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = await response.json();
+        setIsConnected(Boolean(payload?.connected));
+        setGithubUsername(payload?.username || '');
+      } catch {
+        setIsConnected(false);
+        setGithubUsername('');
+      }
+    };
+
+    hydrateGithubConnection();
   }, [searchParams]);
 
   const handleConnectGithub = () => {
@@ -53,6 +58,15 @@ const TicketsClientPage = () => {
     const scope = 'public_repo,read:user';
 
     window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+  };
+
+  const handleDisconnectGithub = async () => {
+    try {
+      await fetch('/api/tickets/auth', { method: 'DELETE' });
+    } finally {
+      setIsConnected(false);
+      setGithubUsername('');
+    }
   };
 
   const loadTicketInsights = async (repoOverride?: string) => {
@@ -109,6 +123,7 @@ const TicketsClientPage = () => {
 
       const data = await response.json();
       setGeneratedTicket(data.ticket);
+      setRepoStatsSnapshot(data.repo_stats || null);
       await loadTicketInsights(repoUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -154,7 +169,7 @@ const TicketsClientPage = () => {
           isGenerating={isGenerating}
           isLoadingInsights={isLoadingInsights}
           onConnectGithub={handleConnectGithub}
-          onDisconnectGithub={() => setIsConnected(false)}
+          onDisconnectGithub={handleDisconnectGithub}
           onRepoChange={setRepoUrl}
           onTaskDescriptionChange={setTaskDescription}
           onContextChange={setContext}
@@ -168,7 +183,11 @@ const TicketsClientPage = () => {
             onCopyToClipboard={handleCopyToClipboard}
             onDownloadMarkdown={handleDownloadMarkdown}
           />
-          <TicketAnalyticsCard ticketStats={ticketStats} ticketHistory={ticketHistory} />
+          <TicketAnalyticsCard
+            ticketStats={ticketStats}
+            ticketHistory={ticketHistory}
+            repoStatsSnapshot={repoStatsSnapshot}
+          />
         </div>
       </div>
     </div>

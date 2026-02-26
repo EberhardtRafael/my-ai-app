@@ -8,6 +8,8 @@ import sqlite3
 import json
 import os
 import statistics
+import re
+from difflib import SequenceMatcher
 
 class GitHubClient:
     def __init__(self, token: str):
@@ -263,9 +265,49 @@ class GitHubClient:
         estimation = ticket.get("estimation", {})
         metrics = (repo_stats or {}).get("metrics", {})
         commits = (repo_stats or {}).get("commits", [])
+        normalized_task = " ".join((task_description or "").lower().split())
+        normalized_title = self._normalize_ticket_title(ticket.get("title", ""), normalized_task)
+        new_fingerprint = self._task_fingerprint(normalized_task)
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+
+        cursor.execute(
+            '''
+            SELECT task_description, title
+            FROM ticket_history
+            WHERE repo_name = ?
+              AND context = ?
+              AND datetime(created_at) > datetime('now', '-24 hours')
+            ORDER BY datetime(created_at) DESC
+            LIMIT 50
+            ''',
+            (repo_name, context),
+        )
+
+        existing_recent = cursor.fetchall()
+        for existing_task, existing_title in existing_recent:
+            existing_task_normalized = " ".join(((existing_task or "").lower()).split())
+            existing_title_normalized = self._normalize_ticket_title(
+                existing_title or "",
+                existing_task_normalized,
+            )
+
+            exact_match = existing_task_normalized == normalized_task
+            fingerprint_match = (
+                new_fingerprint
+                and self._task_fingerprint(existing_task_normalized) == new_fingerprint
+            )
+            task_similarity = SequenceMatcher(None, normalized_task, existing_task_normalized).ratio()
+            title_similarity = SequenceMatcher(
+                None,
+                normalized_title.lower(),
+                existing_title_normalized.lower(),
+            ).ratio()
+
+            if exact_match or fingerprint_match or (task_similarity >= 0.88 and title_similarity >= 0.9):
+                conn.close()
+                return
 
         cursor.execute(
             '''
@@ -287,9 +329,9 @@ class GitHubClient:
             (
                 repo_name,
                 ticket.get("id", "UNKNOWN"),
-                ticket.get("title", "Untitled Ticket"),
+                normalized_title,
                 context,
-                task_description,
+                normalized_task,
                 estimation.get("hours", 0),
                 estimation.get("range", [0, 0])[0],
                 estimation.get("range", [0, 0])[1],
@@ -315,6 +357,7 @@ class GitHubClient:
                 id,
                 ticket_id,
                 title,
+                task_description,
                 context,
                 estimated_hours,
                 estimate_low,
@@ -334,7 +377,84 @@ class GitHubClient:
 
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        return rows
+
+        deduped_rows: List[Dict[str, Any]] = []
+        seen_ticket_ids = set()
+        seen_title_dates = set()
+
+        for row in rows:
+            ticket_id = row.get("ticket_id")
+            if ticket_id and ticket_id in seen_ticket_ids:
+                continue
+
+            if ticket_id:
+                seen_ticket_ids.add(ticket_id)
+
+            row["title"] = self._normalize_ticket_title(
+                row.get("title", ""),
+                row.get("task_description", ""),
+            )
+
+            created_at = str(row.get("created_at") or "")
+            created_date = created_at[:10] if len(created_at) >= 10 else "unknown"
+            title_date_key = (row["title"].lower(), created_date)
+
+            if title_date_key in seen_title_dates:
+                continue
+
+            seen_title_dates.add(title_date_key)
+            deduped_rows.append(row)
+
+        return deduped_rows
+
+    def _normalize_ticket_title(self, title: str, task_description: str) -> str:
+        """Improve readability of legacy/generated titles."""
+        source = (title or '').strip()
+        description = (task_description or '').strip()
+
+        haystack = f"{source} {description}".lower()
+        if 'related products' in haystack and 'pdp' in haystack:
+            return 'Implement related products section on PDP'
+
+        candidate = source or description
+        if not candidate:
+            return 'New Feature Implementation'
+
+        candidate = candidate.split('.')[0].split('\n')[0]
+        candidate = re.sub(
+            r'^(please\s+|can you\s+|i want to\s+|i need to\s+|we need to\s+|let\'s\s+)',
+            '',
+            candidate,
+            flags=re.IGNORECASE,
+        )
+        candidate = re.split(
+            r'\b(which means|that means|then|basically)\b',
+            candidate,
+            flags=re.IGNORECASE,
+        )[0]
+        candidate = re.sub(r'\s+', ' ', candidate).strip(' ,.-:')
+
+        words = candidate.split()
+        if len(words) > 10:
+            candidate = ' '.join(words[:10])
+
+        if not candidate:
+            return 'New Feature Implementation'
+
+        return candidate[0].upper() + candidate[1:]
+
+    def _task_fingerprint(self, text: str) -> str:
+        """Create a compact semantic fingerprint from task text for duplicate detection."""
+        stop_words = {
+            'the', 'and', 'that', 'this', 'with', 'from', 'have', 'will', 'then', 'into',
+            'your', 'gonna', 'going', 'want', 'need', 'create', 'build', 'make', 'ticket',
+            'section', 'among', 'which', 'means', 'basically', 'mini', 'version'
+        }
+
+        tokens = re.findall(r'[a-z0-9]+', (text or '').lower())
+        meaningful_tokens = sorted({token for token in tokens if len(token) > 2 and token not in stop_words})
+
+        return '|'.join(meaningful_tokens[:20])
 
     def get_ticket_statistics(self, repo_name: str) -> Dict[str, Any]:
         """Aggregate ticket and GitHub history metrics for planning"""

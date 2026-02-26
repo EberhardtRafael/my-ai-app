@@ -39,3 +39,10 @@ export interface TicketStats {
   ticket_velocity_per_week: number;
   historical_prs_analyzed: number;
 }
+
+export interface RepoStatsSnapshot {
+  repo_name: string;
+  avg_time_to_merge: number;
+  total_branches_analyzed: number;
+  cache_age: string;
+}

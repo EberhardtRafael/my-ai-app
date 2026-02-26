@@ -6,7 +6,7 @@
     This file creates the infrastructure necessary for the database to exist.
     It's populated by another code (seed.py)
 '''
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from datetime import datetime
 
@@ -31,7 +31,39 @@ class Product(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     variants = relationship("Variant", back_populates="product", cascade="all, delete-orphan")
+    related_links = relationship(
+        "ProductRelation",
+        foreign_keys="ProductRelation.product_id",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
+    reverse_related_links = relationship(
+        "ProductRelation",
+        foreign_keys="ProductRelation.related_product_id",
+        back_populates="related_product",
+        cascade="all, delete-orphan",
+    )
     #There's a relation of one product to many variants
+
+
+class ProductRelation(Base):
+    __tablename__ = "product_relations"
+    __table_args__ = (
+        UniqueConstraint("product_id", "related_product_id", name="uq_product_relation_pair"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    related_product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    relation_type = Column(String, nullable=False)  # bundle, collection, dependency
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    product = relationship("Product", foreign_keys=[product_id], back_populates="related_links")
+    related_product = relationship(
+        "Product",
+        foreign_keys=[related_product_id],
+        back_populates="reverse_related_links",
+    )
 
 class Variant(Base):
     __tablename__ = "variants"
@@ -124,6 +156,7 @@ class Review(Base):
 # DB setup
 engine = create_engine("sqlite:///products.db")
 Session = sessionmaker(bind=engine)
+Base.metadata.create_all(engine)
 session = Session()
 
 def init_db():

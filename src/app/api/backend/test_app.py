@@ -70,6 +70,29 @@ class TestGraphQLAPI:
             assert 'id' in product
             assert 'name' in product
             assert 'variants' in product
+
+    def test_query_related_products(self, client):
+        """Test querying related products for PDP mini-PLP section"""
+        query = """
+        query {
+            relatedProducts(productId: 1, limit: 4) {
+                id
+                name
+                category
+            }
+        }
+        """
+        response = client.post(
+            '/graphql',
+            json={'query': query},
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'data' in data
+        assert 'relatedProducts' in data['data']
+        assert isinstance(data['data']['relatedProducts'], list)
     
     def test_query_user(self, client):
         """Test querying a user"""

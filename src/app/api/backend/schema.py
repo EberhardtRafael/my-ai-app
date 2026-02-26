@@ -7,7 +7,7 @@
 '''
 import strawberry
 from typing import List, Optional
-from models import Product, Variant, User, Favorite, Order, OrderItem, Review, session
+from models import Product, ProductRelation, Variant, User, Favorite, Order, OrderItem, Review, session
 from sqlalchemy import or_, func
 from datetime import datetime
 import hashlib
@@ -214,6 +214,111 @@ class OrderType:
             items=[OrderItemType.from_db(item) for item in order.items]
         )
 
+
+def _tags_set(tags: Optional[str]) -> set:
+    if not tags:
+        return set()
+    return {tag.strip().lower() for tag in tags.split(',') if tag.strip()}
+
+
+def _infer_relation_type(base_product: Product, candidate: Product) -> Optional[str]:
+    shared_tags = _tags_set(base_product.tags) & _tags_set(candidate.tags)
+    same_category = base_product.category == candidate.category
+    same_brand = bool(base_product.brand and candidate.brand and base_product.brand == candidate.brand)
+    same_material = bool(base_product.material and candidate.material and base_product.material == candidate.material)
+
+    if same_category and same_brand:
+        return "collection"
+    if len(shared_tags) >= 2 or same_material:
+        return "dependency"
+
+    if same_category:
+        max_price = max(base_product.price or 0, candidate.price or 0, 1)
+        relative_price_delta = abs((base_product.price or 0) - (candidate.price or 0)) / max_price
+        if relative_price_delta <= 0.35:
+            return "bundle"
+
+    return None
+
+
+def _relation_score(base_product: Product, candidate: Product) -> int:
+    shared_tags = _tags_set(base_product.tags) & _tags_set(candidate.tags)
+    score = len(shared_tags)
+
+    if base_product.category == candidate.category:
+        score += 3
+    if base_product.brand and candidate.brand and base_product.brand == candidate.brand:
+        score += 3
+    if base_product.material and candidate.material and base_product.material == candidate.material:
+        score += 2
+
+    return score
+
+
+def _insert_relation_pair(product_id: int, related_product_id: int, relation_type: str):
+    if product_id == related_product_id:
+        return
+
+    existing = session.query(ProductRelation).filter(
+        ProductRelation.product_id == product_id,
+        ProductRelation.related_product_id == related_product_id,
+    ).first()
+    if not existing:
+        session.add(
+            ProductRelation(
+                product_id=product_id,
+                related_product_id=related_product_id,
+                relation_type=relation_type,
+            )
+        )
+
+    reciprocal = session.query(ProductRelation).filter(
+        ProductRelation.product_id == related_product_id,
+        ProductRelation.related_product_id == product_id,
+    ).first()
+    if not reciprocal:
+        session.add(
+            ProductRelation(
+                product_id=related_product_id,
+                related_product_id=product_id,
+                relation_type=relation_type,
+            )
+        )
+
+
+def _ensure_product_relations(product: Product, max_links: int = 24):
+    existing_count = session.query(ProductRelation).filter(ProductRelation.product_id == product.id).count()
+    if existing_count >= max_links:
+        return
+
+    candidates = session.query(Product).filter(
+        Product.id != product.id,
+        Product.category == product.category,
+    ).limit(200).all()
+
+    ranked_candidates = []
+    for candidate in candidates:
+        relation_type = _infer_relation_type(product, candidate)
+        if not relation_type:
+            continue
+        ranked_candidates.append((
+            _relation_score(product, candidate),
+            candidate.id,
+            relation_type,
+        ))
+
+    ranked_candidates.sort(key=lambda item: item[0], reverse=True)
+
+    links_added = 0
+    for _, candidate_id, relation_type in ranked_candidates:
+        _insert_relation_pair(product.id, candidate_id, relation_type)
+        links_added += 1
+        if links_added >= max_links:
+            break
+
+    if links_added > 0:
+        session.commit()
+
 # Queries - Read operations
 
 @strawberry.type
@@ -256,6 +361,30 @@ class Query:
         # Get a single product by ID
         db_product = session.query(Product).get(id)
         return ProductType.from_db(db_product) if db_product else None
+
+    @strawberry.field
+    def related_products(
+        self,
+        product_id: int,
+        limit: int = 6,
+        relation_type: Optional[str] = None,
+    ) -> List[ProductType]:
+        db_product = session.query(Product).get(product_id)
+        if not db_product:
+            return []
+
+        _ensure_product_relations(db_product)
+
+        query = session.query(Product).join(
+            ProductRelation,
+            ProductRelation.related_product_id == Product.id,
+        ).filter(ProductRelation.product_id == product_id)
+
+        if relation_type:
+            query = query.filter(ProductRelation.relation_type == relation_type.lower())
+
+        related_products = query.distinct().limit(limit).all()
+        return [ProductType.from_db(product) for product in related_products]
     
     @strawberry.field
     def user(self, id: int) -> Optional[UserType]:
