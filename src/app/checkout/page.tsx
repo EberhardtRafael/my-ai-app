@@ -14,12 +14,14 @@ import { useCart } from '@/contexts/CartContext';
 import { useLocalization } from '@/contexts/LocalizationContext';
 import { formatCardNumber, formatExpiryDate, simulatePayment } from '@/utils/cardUtils';
 import { type CartItem, fetchCart } from '@/utils/fetchCart';
+import { getEffectiveUserId } from '@/utils/guestSessionClient';
 import { checkoutCart } from '@/utils/fetchOrders';
 
 export default function CheckoutPage() {
   const { t } = useLocalization();
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { setCartItemsCount } = useCart();
   const toast = useToast();
@@ -40,18 +42,27 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    if (!session?.user?.id) {
+    const resolveUserId = async () => {
+      const userId = await getEffectiveUserId(session?.user?.id ?? null);
+      setEffectiveUserId(userId);
+    };
+
+    resolveUserId();
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!effectiveUserId) {
       setLoading(false);
       return;
     }
 
     loadCart();
-  }, [session]);
+  }, [effectiveUserId]);
 
   const loadCart = async () => {
-    if (!session?.user?.id) return;
+    if (!effectiveUserId) return;
 
-    const data = await fetchCart(parseInt(session.user.id, 10));
+    const data = await fetchCart(parseInt(effectiveUserId, 10));
     const items = data?.data?.cart?.items || [];
     setCartItems(items);
     setLoading(false);
@@ -94,8 +105,8 @@ export default function CheckoutPage() {
     try {
       const result = await simulatePayment(cardNumber);
 
-      if (result.success && session?.user?.id) {
-        const userId = parseInt(session.user.id, 10);
+      if (result.success && effectiveUserId) {
+        const userId = parseInt(effectiveUserId, 10);
 
         // Checkout the cart (converts cart order to pending order)
         await checkoutCart({
@@ -134,13 +145,11 @@ export default function CheckoutPage() {
   const tax: number = subtotal * 0.1; // 10% tax
   const total: number = subtotal + shipping + tax;
 
-  const showEmptyState = cartItems.length === 0 && !loading && session?.user;
+  const showEmptyState = cartItems.length === 0 && !loading;
 
   return (
     <PageShell
       title={t('checkout.title')}
-      requireAuth
-      isAuthenticated={!!session?.user}
       loading={loading}
     >
       {showEmptyState ? (

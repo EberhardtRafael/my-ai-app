@@ -96,10 +96,10 @@ export async function addToCart(
   return response.json();
 }
 
-export async function updateCartItem(itemId: number, quantity: number): Promise<any> {
+export async function updateCartItem(userId: number, itemId: number, quantity: number): Promise<any> {
   const mutation = `
-    mutation UpdateCartItem($itemId: Int!, $quantity: Int!) {
-      updateCartItem(itemId: $itemId, quantity: $quantity) {
+    mutation UpdateCartItem($userId: Int!, $itemId: Int!, $quantity: Int!) {
+      updateCartItem(userId: $userId, itemId: $itemId, quantity: $quantity) {
         id
         quantity
       }
@@ -109,23 +109,23 @@ export async function updateCartItem(itemId: number, quantity: number): Promise<
   const response = await fetch('/api/cart', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: mutation, variables: { itemId, quantity } }),
+    body: JSON.stringify({ query: mutation, variables: { userId, itemId, quantity } }),
   });
 
   return response.json();
 }
 
-export async function removeFromCart(itemId: number): Promise<any> {
+export async function removeFromCart(userId: number, itemId: number): Promise<any> {
   const mutation = `
-    mutation RemoveFromCart($itemId: Int!) {
-      removeFromCart(itemId: $itemId)
+    mutation RemoveFromCart($userId: Int!, $itemId: Int!) {
+      removeFromCart(userId: $userId, itemId: $itemId)
     }
   `;
 
   const response = await fetch('/api/cart', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: mutation, variables: { itemId } }),
+    body: JSON.stringify({ query: mutation, variables: { userId, itemId } }),
   });
 
   return response.json();

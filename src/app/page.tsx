@@ -8,12 +8,14 @@ import InfoMessage from '@/components/ui/InfoMessage';
 import ProductCardCompact from '@/components/ui/ProductCardCompact';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useLocalization } from '@/contexts/LocalizationContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import type { RecommendedProduct } from '@/utils/fetchRecommendations';
 import { fetchRecommendations } from '@/utils/fetchRecommendations';
 
 export default function Home() {
   const { t } = useLocalization();
   const { data: session } = useSession();
+  const { displayName } = useProfile();
   const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,8 +39,8 @@ export default function Home() {
   }, [session]);
 
   // Business logic: Compute title and subtitle based on session
-  const title = session?.user?.name
-    ? t('homePage.titlePersonalized', { name: session.user.name })
+  const title = displayName
+    ? t('homePage.titlePersonalized', { name: displayName })
     : t('homePage.title');
   const subtitle = session?.user?.id
     ? t('homePage.subtitlePersonalized')

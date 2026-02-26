@@ -1,0 +1,11 @@
+{
+  "records": [
+    {
+      "id": "7",
+      "username": "Test Dev",
+      "email": "rafaelsarate@gmail.com",
+      "role": "dev",
+      "updatedAt": "2026-02-25T23:38:40.703Z"
+    }
+  ]
+}

@@ -11,17 +11,27 @@ import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useLocalization } from '@/contexts/LocalizationContext';
 import { usePlpSearchState } from '@/contexts/PlpSearchStateContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { getEffectiveUserId } from '@/utils/guestSessionClient';
 import Dropdown from './ui/Dropdown';
 import SearchBox from './ui/SearchBox';
 import Toast from './ui/Toast';
 import Tooltip from './ui/Tooltip';
 import { useToast } from './ui/useToast';
 
+type DevModeState = {
+  enabled: boolean;
+  available: boolean;
+  forced: boolean;
+  role?: 'user' | 'dev';
+};
+
 export default function Header() {
   const { data: session } = useSession();
   const { favoritesCount, setFavoritesCount } = useFavorites();
   const { cartItemsCount, setCartItemsCount } = useCart();
   const { setHasPendingSearch } = usePlpSearchState();
+  const { displayName } = useProfile();
   const { t } = useLocalization();
   const toast = useToast();
 
@@ -32,10 +42,73 @@ export default function Header() {
   const search = searchParams.get('search') || '';
 
   const [searchValue, setSearchValue] = useState<string>(search);
+  const [devModeState, setDevModeState] = useState<DevModeState>({
+    enabled: false,
+    available: false,
+    forced: false,
+  });
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(false);
+  const [isTogglingDevMode, setIsTogglingDevMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    const resolveUserId = async () => {
+      const userId = await getEffectiveUserId(session?.user?.id ?? null);
+      setEffectiveUserId(userId);
+    };
+
+    resolveUserId();
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const loadGuestModeState = async () => {
+      if (session?.user?.id) {
+        setIsGuestMode(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/guest-session?create=false', {
+          method: 'GET',
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          setIsGuestMode(false);
+          return;
+        }
+
+        const payload = await response.json();
+        setIsGuestMode(Boolean(payload?.isGuest));
+      } catch {
+        setIsGuestMode(false);
+      }
+    };
+
+    loadGuestModeState();
+  }, [session?.user?.id]);
 
   useEffect(() => {
     setSearchValue(search);
   }, [searchParams]);
+
+  useEffect(() => {
+    const loadDevModeState = async () => {
+      try {
+        const response = await fetch('/api/dev/mode', { cache: 'no-store' });
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as DevModeState;
+        setDevModeState(payload);
+      } catch {
+        setDevModeState({ enabled: false, available: false, forced: false });
+      }
+    };
+
+    loadDevModeState();
+  }, []);
 
   // Fetch favorites count
   const fetchFavoritesCount = useCallback(async () => {
@@ -65,7 +138,7 @@ export default function Header() {
 
   // Fetch cart items count
   const fetchCartCount = useCallback(async () => {
-    if (!session?.user?.id) {
+    if (!effectiveUserId) {
       setCartItemsCount(0);
       return;
     }
@@ -85,7 +158,7 @@ export default function Header() {
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ query, variables: { userId: parseInt(session.user.id, 10) } }),
+        body: JSON.stringify({ query, variables: { userId: parseInt(effectiveUserId, 10) } }),
       });
       const result = await response.json();
       const items = result?.data?.cart?.items || [];
@@ -94,7 +167,7 @@ export default function Header() {
     } catch (error) {
       console.error('Error fetching cart count:', error);
     }
-  }, [session?.user?.id, setCartItemsCount]);
+  }, [effectiveUserId, setCartItemsCount]);
 
   useEffect(() => {
     fetchCartCount();
@@ -116,14 +189,64 @@ export default function Header() {
 
   const dropdownItems = [
     {
-      label: 'Profile',
-      onClick: () => toast.info(t('common.comingSoonTitle'), t('common.comingSoonProfile')),
+      label: t('common.profile'),
+      onClick: () => router.push('/profile'),
     },
     {
       label: t('common.signOut'),
       onClick: () => signOut(),
     },
   ];
+
+  const handleToggleDeveloperMode = async () => {
+    if (!devModeState.available || devModeState.forced) {
+      return;
+    }
+
+    setIsTogglingDevMode(true);
+
+    try {
+      const response = await fetch('/api/dev/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !devModeState.enabled }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle developer mode');
+      }
+
+      const payload = (await response.json()) as DevModeState;
+      setDevModeState(payload);
+      router.refresh();
+    } catch (error) {
+      console.error('Error toggling developer mode:', error);
+      toast.error('Error', 'Failed to toggle developer mode');
+    } finally {
+      setIsTogglingDevMode(false);
+    }
+  };
+
+  const handleExitGuestMode = async () => {
+    try {
+      const response = await fetch('/api/auth/guest-session', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to exit guest mode');
+      }
+
+      setIsGuestMode(false);
+      setEffectiveUserId(null);
+      setCartItemsCount(0);
+      router.push('/auth/signin');
+      router.refresh();
+    } catch (error) {
+      console.error('Error exiting guest mode:', error);
+      toast.error('Error', 'Failed to exit guest mode');
+    }
+  };
 
   return (
     <>
@@ -136,17 +259,19 @@ export default function Header() {
           <Link href="/plp">
             <Button disabled={pathname === '/plp'}>{t('common.products')}</Button>
           </Link>
-          <Link href="/favorites">
-            <Button className="flex items-center gap-2 relative">
-              <Icon name="heart" size={16} />
-              <span>{t('common.favorites')}</span>
-              {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {favoritesCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          {session && (
+            <Link href="/favorites">
+              <Button className="flex items-center gap-2 relative">
+                <Icon name="heart" size={16} />
+                <span>{t('common.favorites')}</span>
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
           {session && (
             <>
               <Link href="/orders">
@@ -155,14 +280,21 @@ export default function Header() {
               <Link href="/assistant">
                 <Button disabled={pathname === '/assistant'}>{t('common.assistant')}</Button>
               </Link>
-              <Link href="/tickets">
-                <Button disabled={pathname === '/tickets'}>
-                  <span className="flex items-center gap-2">
-                    <Icon name="document-text" size={16} />
-                    {t('common.tickets')}
-                  </span>
-                </Button>
-              </Link>
+              {devModeState.enabled && (
+                <>
+                  <Link href="/tickets">
+                    <Button disabled={pathname === '/tickets'}>
+                      <span className="flex items-center gap-2">
+                        <Icon name="document-text" size={16} />
+                        {t('common.tickets')}
+                      </span>
+                    </Button>
+                  </Link>
+                  <Link href="/dev/testing">
+                    <Button disabled={pathname === '/dev/testing'}>{t('common.devLab')}</Button>
+                  </Link>
+                </>
+              )}
             </>
           )}
         </nav>
@@ -175,25 +307,39 @@ export default function Header() {
             onChange={onSearchChange}
             onSearch={onSearch}
           />
+          <Link href="/cart">
+            <Tooltip text={t('header.shoppingCartTooltip')}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="p-2 hover:text-gray-500 transition-colors relative"
+                aria-label={t('header.cartAriaLabel')}
+              >
+                <Icon name="cart" size={24} />
+                {cartItemsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </Button>
+            </Tooltip>
+          </Link>
+
           {session && (
             <>
-              <Link href="/cart">
-                <Tooltip text={t('header.shoppingCartTooltip')}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="p-2 hover:text-gray-500 transition-colors relative"
-                    aria-label={t('header.cartAriaLabel')}
-                  >
-                    <Icon name="cart" size={24} />
-                    {cartItemsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {cartItemsCount}
-                      </span>
-                    )}
-                  </Button>
-                </Tooltip>
-              </Link>
+              {(devModeState.available || devModeState.enabled) && (
+                <Button
+                  variant={devModeState.enabled ? 'primary' : 'secondary'}
+                  disabled={isTogglingDevMode || devModeState.forced}
+                  onClick={handleToggleDeveloperMode}
+                >
+                  {isTogglingDevMode
+                    ? t('common.devModeSwitching')
+                    : devModeState.enabled
+                      ? t('common.devModeOn')
+                      : t('common.devModeOff')}
+                </Button>
+              )}
 
               {/* User Dropdown */}
               <Dropdown
@@ -204,13 +350,24 @@ export default function Header() {
                     variant="ghost"
                     className="flex items-center gap-2 px-3 py-2"
                   >
-                    <span className="text-sm whitespace-nowrap">
-                      {session.user?.name || session.user?.email}
-                    </span>
+                    <span className="text-sm whitespace-nowrap">{displayName || session.user?.email}</span>
                     <Icon name="chevron-down" size={16} />
                   </Button>
                 }
               />
+            </>
+          )}
+
+          {!session && (
+            <>
+              {isGuestMode && (
+                <Button type="button" variant="secondary" onClick={handleExitGuestMode}>
+                  {t('common.exitGuestMode')}
+                </Button>
+              )}
+              <Link href="/auth/signin">
+                <Button>{t('common.signIn')}</Button>
+              </Link>
             </>
           )}
         </div>

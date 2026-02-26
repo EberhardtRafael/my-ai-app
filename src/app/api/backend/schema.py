@@ -11,6 +11,7 @@ from models import Product, Variant, User, Favorite, Order, OrderItem, Review, s
 from sqlalchemy import or_, func
 from datetime import datetime
 import hashlib
+from werkzeug.security import check_password_hash, generate_password_hash
 
 # GraphQL Types - Define the structure of data returned by API
 
@@ -265,16 +266,33 @@ class Query:
     def user_by_username(self, username: str) -> Optional[UserType]:
         # Get a user by username (used for login)
         return session.query(User).filter(User.username == username).first()
+
+    @strawberry.field
+    def user_by_email(self, email: str) -> Optional[UserType]:
+        # Get a user by email (used for password reset and SSO account linking)
+        return session.query(User).filter(User.email == email).first()
     
     @strawberry.field
-    def verify_user(self, username: str, password_hash: str) -> Optional[UserType]:
-        # Verify user credentials by username and password hash
-        # Used for authentication
-        user = session.query(User).filter(
-            User.username == username,
-            User.password_hash == password_hash
-        ).first()
-        return user
+    def verify_user(self, username: str, password: str) -> Optional[UserType]:
+        # Verify user credentials by username and plaintext password.
+        # Supports secure Werkzeug hashes and legacy SHA256 hashes.
+        user = session.query(User).filter(User.username == username).first()
+
+        if not user:
+            return None
+
+        try:
+            if check_password_hash(user.password_hash, password):
+                return user
+        except ValueError:
+            # Legacy hash format or malformed hash: fallback check below.
+            pass
+
+        legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+        if user.password_hash == legacy_hash:
+            return user
+
+        return None
     
     @strawberry.field
     def favorites(self, user_id: int, active_only: bool = True) -> List[FavoriteType]:
@@ -423,12 +441,30 @@ class Mutation:
     @strawberry.mutation
     def create_user(self, username: str, email: str, password: str) -> UserType:
         # Create a new user with hashed password
-        # Password is hashed using SHA256 for security
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        existing_user = session.query(User).filter(
+            or_(User.username == username, User.email == email)
+        ).first()
+
+        if existing_user:
+            raise ValueError("Username or email already in use")
+
+        password_hash = generate_password_hash(password)
         user = User(username=username, email=email, password_hash=password_hash)
         session.add(user)
         session.commit()
         return user
+
+    @strawberry.mutation
+    def reset_user_password(self, email: str, password: str) -> bool:
+        # Reset account password by email
+        user = session.query(User).filter(User.email == email).first()
+
+        if not user:
+            return False
+
+        user.password_hash = generate_password_hash(password)
+        session.commit()
+        return True
     
     @strawberry.mutation
     def add_favorite(self, user_id: int, product_id: int) -> FavoriteResponse:
@@ -524,9 +560,18 @@ class Mutation:
         return OrderItemType.from_db(order_item)
     
     @strawberry.mutation
-    def update_cart_item(self, item_id: int, quantity: int) -> OrderItemType:
-        # Update quantity of a cart item
-        item = session.query(OrderItem).get(item_id)
+    def update_cart_item(self, user_id: int, item_id: int, quantity: int) -> OrderItemType:
+        # Update quantity of a cart item only when it belongs to user's active cart
+        item = (
+            session.query(OrderItem)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(
+                OrderItem.id == item_id,
+                Order.user_id == user_id,
+                Order.status == "cart"
+            )
+            .first()
+        )
         if item:
             item.quantity = quantity
             session.commit()
@@ -534,9 +579,18 @@ class Mutation:
         return None
     
     @strawberry.mutation
-    def remove_from_cart(self, item_id: int) -> bool:
-        # Remove item from cart (hard delete)
-        item = session.query(OrderItem).get(item_id)
+    def remove_from_cart(self, user_id: int, item_id: int) -> bool:
+        # Remove item from cart only when it belongs to user's active cart
+        item = (
+            session.query(OrderItem)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(
+                OrderItem.id == item_id,
+                Order.user_id == user_id,
+                Order.status == "cart"
+            )
+            .first()
+        )
         if item:
             session.delete(item)
             session.commit()

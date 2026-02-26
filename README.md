@@ -106,6 +106,7 @@ where p̂ = (rating_avg - 1) / 4, n = review_count, z = 1.96 (95% CI)
 
 #### User Experience
 - **Authentication**: NextAuth.js integration with credentials provider
+- **Profile Page**: `/profile` lets users update profile details and review status/permissions
 - **Product Catalog**: Browse products with categories, variants (color/size), and inventory
 - **Product Detail Pages**: Rich product information, variant selection, reviews, recommendations
 - **Shopping Cart**: Add/remove items, quantity management, persistent cart state
@@ -143,6 +144,21 @@ yarn test:python       # Backend tests
 yarn test:python:coverage  # Backend with coverage
 yarn test:all          # Both frontend and backend
 ```
+
+#### Developer Mode (Ticket + Testing Tools)
+- Ticket generator and developer testing dashboard are available only in developer mode.
+- Access is role-based with two roles: `user` and `dev`.
+  - `user`: standard shopping/app features
+  - `dev`: can toggle developer mode and access developer tools when enabled
+- The Dev Mode toggle is shown in the header next to the profile area and is visible only for `dev` users.
+- Developer mode can be forced globally with `DEV_MODE=true` (or `NEXT_PUBLIC_DEV_MODE=true`).
+- In developer mode, signed-in `dev` users can access:
+  - `/tickets`
+  - `/dev/testing` (run test commands from UI + visualize pass/fail and coverage stats)
+
+#### Profile & Permissions
+- `/profile` provides editable profile information fields (name, phone, location, about).
+- The page also shows account role (`user` or `dev`), current Dev Mode status, and effective permissions.
 
 ## 🏗️ Technical Architecture
 
@@ -339,6 +355,11 @@ cp .env.local.example .env.local
 # NEXTAUTH_URL=http://localhost:3000
 # GITHUB_CLIENT_ID=<your GitHub OAuth app client ID>
 # GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>
+# DEV_USER_IDS=<comma-separated user ids that should be role=dev>
+# DEV_USERNAMES=<comma-separated usernames that should be role=dev>
+# DEV_USER_EMAILS=<comma-separated emails that should be role=dev>
+# Optional: force-enable dev mode for all dev-role users
+# DEV_MODE=true
 ```
 
 5. **Initialize database with seed data**
