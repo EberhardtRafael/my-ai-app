@@ -247,7 +247,7 @@ yarn test:all          # Both frontend and backend
 ┌────────────────────────────────────────────────────────────────┐
 │                    Next.js Frontend (Port 3000)                │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  App Router (Next.js 15.5)                                │  │
+│  │  App Router (Next.js 15.5)                               │  │
 │  │  - /              → Personalized "For You"               │  │
 │  │  - /plp           → Product Listing                      │  │
 │  │  - /pdp/:id       → Product Details + Reviews            │  │
