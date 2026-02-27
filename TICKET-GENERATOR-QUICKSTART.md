@@ -56,7 +56,7 @@ yarn dev
 
 **Input:**
 ```
-Repo: sarate/my-ai-app
+Repo: sarate/ai-powered-fullstack-ecommerce-platform
 Task: Add dark mode toggle to header with system preference detection and localStorage persistence
 Context: Frontend
 ```

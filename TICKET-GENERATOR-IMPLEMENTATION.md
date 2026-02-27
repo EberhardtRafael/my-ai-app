@@ -122,7 +122,7 @@ confidence = f(
 **Input:**
 ```json
 {
-  "repo": "sarate/my-ai-app",
+  "repo": "sarate/ai-powered-fullstack-ecommerce-platform",
   "task_description": "Add dark mode toggle to header with localStorage persistence",
   "context": "frontend"
 }
@@ -247,7 +247,7 @@ yarn dev
 # 4. Test
 # - Visit http://localhost:3000/tickets
 # - Connect GitHub
-# - Enter: sarate/my-ai-app
+# - Enter: sarate/ai-powered-fullstack-ecommerce-platform
 # - Describe: "Add export functionality to orders page"
 # - Generate and download!
 ```
