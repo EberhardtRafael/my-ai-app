@@ -11,6 +11,8 @@
 [![Setup Time](https://img.shields.io/badge/Setup-60_seconds-success)]()
 
 > **Quick Start**: `./quickstart.sh` → Running in 60 seconds with Docker!
+> 
+> **📚 Full Documentation**: See [`docs/`](docs/) folder • **🔧 Scripts**: See [`scripts/`](scripts/) folder
 
 A sophisticated, full-stack e-commerce application demonstrating advanced machine learning, Bayesian statistics, and AI-powered features for personalized shopping experiences and intelligent development workflows.
 
@@ -311,7 +313,7 @@ yarn test:all          # Both frontend and backend
                     └────────────────────┘
 ```
 
-*See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed data flow diagrams and algorithm explanations.*
+*See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed data flow diagrams and algorithm explanations.*
 
 ## 🚀 Quick Start (60 Seconds!)
 
@@ -584,7 +586,7 @@ docker compose exec backend pytest -v
 ### Quick Setup for Ticket Generator
 
 ```bash
-./setup-ticket-generator.sh
+./scripts/setup-ticket-generator.sh
 ```
 
 This automated script:
@@ -595,20 +597,20 @@ This automated script:
 
 ## 📚 Documentation
 
-Detailed documentation available in separate files:
+Detailed documentation available in the [`docs/`](docs/) folder:
 
-- **[QUICKSTART.md](QUICKSTART.md)**: 60-second setup guide and troubleshooting
-- **[FEATURES.md](FEATURES.md)**: Complete feature list (220+ features implemented)
-- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**: Executive summary for technical assessment
-- **[ARCHITECTURE.md](ARCHITECTURE.md)**: System architecture diagrams, data flow, algorithms, and database schema
-- **[RECOMMENDATION-QUALITY-SYSTEM.md](RECOMMENDATION-QUALITY-SYSTEM.md)**: Deep dive into Bayesian rating quality system with mathematical explanations, implementation details, and examples
-- **[FOR-YOU-IMPLEMENTATION.md](FOR-YOU-IMPLEMENTATION.md)**: Complete guide to personalized recommendation system, collaborative filtering algorithms, and cold-start strategies
-- **[TICKET-GENERATOR-IMPLEMENTATION.md](TICKET-GENERATOR-IMPLEMENTATION.md)**: AI ticket generator architecture, ML estimation engine, and GitHub integration details
-- **[TICKET-GENERATOR-SETUP.md](TICKET-GENERATOR-SETUP.md)**: Step-by-step setup instructions for GitHub OAuth and ticket generator
-- **[ASSISTANT-LLM-INTEGRATION.md](ASSISTANT-LLM-INTEGRATION.md)**: Shopping assistant architecture, LLM integration, and feature flags
-- **[ASSISTANT-QUICKREF.md](ASSISTANT-QUICKREF.md)**: Quick reference for assistant configuration and testing
-- **[TESTING.md](TESTING.md)**: Testing philosophy, coverage goals, and how to write tests
-- **[WHAT-TESTS-DO.md](WHAT-TESTS-DO.md)**: Explanation of what each test suite validates
+- **[docs/QUICKSTART.md](docs/QUICKSTART.md)**: 60-second setup guide and troubleshooting
+- **[docs/FEATURES.md](docs/FEATURES.md)**: Complete feature list (220+ features implemented)
+- **[docs/PROJECT_SUMMARY.md](docs/PROJECT_SUMMARY.md)**: Executive summary for technical assessment
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: System architecture diagrams, data flow, algorithms, and database schema
+- **[docs/RECOMMENDATION-QUALITY-SYSTEM.md](docs/RECOMMENDATION-QUALITY-SYSTEM.md)**: Deep dive into Bayesian rating quality system with mathematical explanations, implementation details, and examples
+- **[docs/FOR-YOU-IMPLEMENTATION.md](docs/FOR-YOU-IMPLEMENTATION.md)**: Complete guide to personalized recommendation system, collaborative filtering algorithms, and cold-start strategies
+- **[docs/TICKET-GENERATOR-IMPLEMENTATION.md](docs/TICKET-GENERATOR-IMPLEMENTATION.md)**: AI ticket generator architecture, ML estimation engine, and GitHub integration details
+- **[docs/TICKET-GENERATOR-SETUP.md](docs/TICKET-GENERATOR-SETUP.md)**: Step-by-step setup instructions for GitHub OAuth and ticket generator
+- **[docs/ASSISTANT-LLM-INTEGRATION.md](docs/ASSISTANT-LLM-INTEGRATION.md)**: Shopping assistant architecture, LLM integration, and feature flags
+- **[docs/ASSISTANT-QUICKREF.md](docs/ASSISTANT-QUICKREF.md)**: Quick reference for assistant configuration and testing
+- **[docs/TESTING.md](docs/TESTING.md)**: Testing philosophy, coverage goals, and how to write tests
+- **[docs/WHAT-TESTS-DO.md](docs/WHAT-TESTS-DO.md)**: Explanation of what each test suite validates
 - **[.github/copilot-instructions.md](.github/copilot-instructions.md)**: Coding standards and architecture patterns for maintaining consistent, high-quality code (makes AI assistants write better code!)
 
 ## 🧠 Machine Learning Algorithms Explained
