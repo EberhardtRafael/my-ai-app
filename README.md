@@ -1,12 +1,13 @@
 # 🛍️ AI-Powered E-Commerce Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?logo=next.js)](https://nextjs.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
 [![Test Coverage](https://img.shields.io/badge/Coverage-94%25-brightgreen)]()
 [![ML](https://img.shields.io/badge/ML-Hybrid_Recommendations-orange)]()
 [![Bayesian](https://img.shields.io/badge/Statistics-Bayesian-purple)]()
+[![i18n](https://img.shields.io/badge/i18n-Ready-green)]()
 [![Setup Time](https://img.shields.io/badge/Setup-60_seconds-success)]()
 
 > **Quick Start**: `./quickstart.sh` → Running in 60 seconds with Docker!
@@ -41,7 +42,7 @@ A sophisticated, full-stack e-commerce application demonstrating advanced machin
 
 ## 🌟 Project Overview
 
-This isn't just another e-commerce site—it's a showcase of cutting-edge technologies working together to create a truly intelligent shopping platform. Built with Next.js 15, Python Flask, GraphQL, and powered by multiple machine learning models and statistical algorithms, this project demonstrates production-ready implementations of personalized recommendations, quality-aware ranking systems, user review analytics, and AI-assisted development tools.
+This isn't just another e-commerce site—it's a showcase of cutting-edge technologies working together to create a truly intelligent shopping platform. Built with Next.js 15.5, Python Flask, GraphQL, and powered by multiple machine learning models and statistical algorithms, this project demonstrates production-ready implementations of personalized recommendations, quality-aware ranking systems, user review analytics, AI-assisted shopping assistant, and AI-powered development tools.
 
 ## 🚀 Key Features
 
@@ -82,7 +83,16 @@ where p̂ = (rating_avg - 1) / 4, n = review_count, z = 1.96 (95% CI)
 - **Similar Task Matching**: Uses Jaccard similarity on keyword extraction to find historical references
 - **Comprehensive Ticket Output**: Generates markdown tickets with user stories, acceptance criteria, technical notes, estimation breakdown, and similar task references
 
-#### 4. **Personalized "For You" Section**
+#### 4. **Shopping Assistant** (Deterministic, Zero-Cost AI)
+- **Product Discovery**: Intelligent search and filtering without external LLM costs
+- **Deterministic Logic**: Rule-based system for consistent, explainable results
+- **Context-Aware Responses**: Understands user intent (search, recommendations, navigation)
+- **Feature Flags**: Configurable behavior through JSON-based feature flags
+- **Optional LLM Enhancement**: Plug-in OpenAI/Anthropic for better empty result handling and conversational quality
+- **Floating Widget & Full Page**: Available as quick-access widget or dedicated `/assistant` page
+- **Product Quick Actions**: Direct add-to-cart, view details, and wishlist from assistant interface
+
+#### 5. **Personalized "For You" Section**
 - **User Segmentation**: Different strategies for existing customers, browsers, and new users
 - **Collaborative Filtering**: Recommends products similar to past purchases using item-item similarity
 - **Category-Based Recommendations**: For users with favorites but no purchases
@@ -105,8 +115,16 @@ where p̂ = (rating_avg - 1) / 4, n = review_count, z = 1.96 (95% CI)
 ### 🎨 Full-Featured E-Commerce
 
 #### User Experience
-- **Authentication**: NextAuth.js integration with credentials provider
-- **Profile Page**: `/profile` lets users update profile details and review status/permissions
+- **Authentication System**: Full-featured auth with multiple options
+  - **Sign In / Sign Up**: Combined page with toggle between modes
+  - **GitHub SSO**: One-click GitHub OAuth integration
+  - **Guest Mode**: Browse and shop without creating an account
+  - **Password Recovery**: Forgot password & reset password flows
+  - **Dev Access Codes**: Special codes for developer role assignment during signup
+  - NextAuth.js integration with credentials and OAuth providers
+- **Profile Management**: `/profile` - Update personal details (name, phone, location, about) and view role/permissions
+- **Shopping Assistant**: `/assistant` - AI-powered product discovery and site help (deterministic, zero-cost)
+- **Internationalization**: Full i18n support with next-intl for multi-language experiences
 - **Product Catalog**: Browse products with categories, variants (color/size), and inventory
 - **Product Detail Pages**: Rich product information, variant selection, reviews, recommendations
 - **Shopping Cart**: Add/remove items, quantity management, persistent cart state
@@ -145,29 +163,49 @@ yarn test:python:coverage  # Backend with coverage
 yarn test:all          # Both frontend and backend
 ```
 
-#### Developer Mode (Ticket + Testing Tools)
-- Ticket generator and developer testing dashboard are available only in developer mode.
-- Access is role-based with two roles: `user` and `dev`.
-  - `user`: standard shopping/app features
-  - `dev`: can toggle developer mode and access developer tools when enabled
-- The Dev Mode toggle is shown in the header next to the profile area and is visible only for `dev` users.
-- Developer mode can be forced globally with `DEV_MODE=true` (or `NEXT_PUBLIC_DEV_MODE=true`).
-- In developer mode, signed-in `dev` users can access:
-  - `/tickets`
-  - `/dev/testing` (run test commands from UI + visualize pass/fail and coverage stats)
+#### Developer Mode & Tools 🛠️
 
-#### Profile & Permissions
-- `/profile` provides editable profile information fields (name, phone, location, about).
-- The page also shows account role (`user` or `dev`), current Dev Mode status, and effective permissions.
+**Role-Based Access Control**:
+- Two user roles: `user` (standard features) and `dev` (developer tools access)
+- Dev Mode toggle appears in header for `dev` role users only
+- Force-enable globally via `DEV_MODE=true` environment variable
+
+**When Developer Mode is Enabled, `dev` users get access to:**
+
+1. **🎫 AI Ticket Generator** (`/tickets`)
+   - GitHub OAuth integration for repository access
+   - ML-based time estimation and task analysis
+   - Generate comprehensive markdown tickets with user stories
+
+2. **🧪 Testing Dashboard** (`/dev/testing`) - *This is awesome!*
+   - **Run all test suites from the UI** - No terminal needed!
+   - **Real-time test execution** - Watch tests run with live output
+   - **Visual pass/fail indicators** - Green checkmarks for success, red X for failures
+   - **Coverage statistics** - See frontend & backend coverage percentages
+   - **Command history** - Review previous test runs
+   - **One-click test execution**: Frontend, Backend, or Both
+   - **Beautiful, interactive interface** - Makes testing fun!
+   
+   Available test commands:
+   - Frontend tests (Jest + React Testing Library)
+   - Backend tests (pytest)
+   - Coverage reports (both stacks)
+   - Smoke tests (quick validation)
+
+**Profile & Permissions**:
+- `/profile` shows your role, dev mode status, and effective permissions
+- Edit profile details (name, phone, location, about)
+- View role assignment and access levels
 
 ## 🏗️ Technical Architecture
 
 ### Frontend Stack
-- **Next.js 15**: React framework with App Router, Server Components, and streaming
+- **Next.js 15.5**: React framework with App Router, Server Components, and streaming
 - **TypeScript**: Type-safe development across the entire frontend
 - **Tailwind CSS 4**: Utility-first styling with custom design system
 - **NextAuth.js**: Authentication with session management
-- **Context API**: Global state management for cart, favorites, and user session
+- **next-intl**: Internationalization and localization support
+- **Context API**: Global state management for cart, favorites, session, and localization
 - **Biome**: Fast, modern linting and formatting (ESLint/Prettier replacement)
 
 ### Backend Stack
@@ -188,6 +226,13 @@ yarn test:all          # Both frontend and backend
 - `ticket_generator.py`: AI-powered ticket creation and estimation
 - `ticket_estimator.py`: ML-based time estimation algorithms
 
+### Key Frontend Modules
+- `src/app/assistant/`: Shopping assistant page and components
+- `src/components/AssistantFloatingWidget.tsx`: Floating assistant widget
+- `src/contexts/LocalizationContext.tsx`: i18n context provider
+- `src/localization/`: Translation system and message definitions
+- `src/utils/assistantLLM.ts`: Optional LLM integration utilities
+
 ### System Architecture Diagram
 
 ```
@@ -200,18 +245,20 @@ yarn test:all          # Both frontend and backend
 ┌────────────────────────────────────────────────────────────────┐
 │                    Next.js Frontend (Port 3000)                │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  App Router (Next.js 15)                                 │  │
+│  │  App Router (Next.js 15.5)                                │  │
 │  │  - /              → Personalized "For You"               │  │
 │  │  - /plp           → Product Listing                      │  │
 │  │  - /pdp/:id       → Product Details + Reviews            │  │
 │  │  - /cart          → Cart + Recommendations               │  │
+│  │  - /assistant     → Shopping Assistant                   │  │
 │  │  - /tickets       → AI Ticket Generator                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  Context Providers                                       │  │
-│  │  - CartContext    → Global cart state                    │  │
-│  │  - FavoritesContext → Wishlist management                │  │
-│  │  - SessionWrapper → NextAuth integration                 │  │
+│  │  - CartContext          → Global cart state              │  │
+│  │  - FavoritesContext     → Wishlist management            │  │
+│  │  - LocalizationContext  → i18n & translations            │  │
+│  │  - SessionWrapper       → NextAuth integration           │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └────────────────────────────┬───────────────────────────────────┘
                              │
@@ -298,9 +345,10 @@ That's it! The script will:
 **Demo Accounts:**
 | Email | Password | Description |
 |-------|----------|-------------|
-| `test@example.com` | `test` | User with purchase history (best for ML demos) |
-| `john@example.com` | `password123` | Another user with different preferences |
+| `test@example.com` | `test` | **Dev role** - Full access including Testing Dashboard & Ticket Generator |
+| `john@example.com` | `password123` | User with different purchase preferences |
 | `jane@example.com` | `password123` | User with favorites but no purchases |
+| *Guest Mode* | *(no password)* | Click \"Continue as Guest\" on sign-in page - browse & shop without account |
 
 ### Option 2: Quick Development Script
 
@@ -355,11 +403,16 @@ cp .env.local.example .env.local
 # NEXTAUTH_URL=http://localhost:3000
 # GITHUB_CLIENT_ID=<your GitHub OAuth app client ID>
 # GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>
+
+# Dev role assignment (optional - for developer tools access):
 # DEV_USER_IDS=<comma-separated user ids that should be role=dev>
 # DEV_USERNAMES=<comma-separated usernames that should be role=dev>
 # DEV_USER_EMAILS=<comma-separated emails that should be role=dev>
+
 # Optional: force-enable dev mode for all dev-role users
 # DEV_MODE=true
+
+# Guest mode and password recovery work automatically, no additional config needed!
 ```
 
 5. **Initialize database with seed data**
@@ -395,13 +448,23 @@ Once the application is running, sign in with a demo account and explore:
 - **The tech:** Collaborative filtering using cosine similarity on user-item interaction matrices
 - **Try it:** Sign in as `test@example.com` → see products tailored to that user's past purchases
 
-### 2. **"You May Also Like" Smart Cart Suggestions** 🛒
+### 2. **Full Authentication System** 🔐
+- **Where:** `/auth/signin` - Unified sign in/sign up page
+- **What it does:** Multiple ways to access the platform
+- **Try it:**
+  - **Sign Up**: Toggle to Sign Up mode, create account with optional dev access code
+  - **GitHub SSO**: Click "Sign in with GitHub" for instant OAuth authentication
+  - **Guest Mode**: Click "Continue as Guest" - browse & shop without creating account
+  - **Password Recovery**: Click "Forgot Password?" → receive reset instructions
+  - All methods work seamlessly with cart persistence and personalization
+
+### 3. **"You May Also Like" Smart Cart Suggestions** 🛒
 - **Where:** Cart page after adding items
 - **What it does:** Hybrid recommendation system combining collaborative + content-based filtering
 - **The tech:** 60% collaborative filtering + 40% content-based, adjusted by Bayesian rating quality
 - **Try it:** Add products to cart → scroll down to see intelligent recommendations
 
-### 3. **Review System with Bayesian Quality Adjustment** ⭐
+### 4. **Review System with Bayesian Quality Adjustment** ⭐
 - **Where:** Any product detail page (click on a product)
 - **What it does:** User reviews influence recommendations using statistically rigorous methods
 - **The tech:** Wilson Score Interval (Lower Bound) for confidence-adjusted rating quality
@@ -411,7 +474,7 @@ Once the application is running, sign in with a demo account and explore:
   - Watch how products with many bad reviews get penalized in recommendations
   - New products with no reviews? No penalty! (Solves cold-start problem)
 
-### 4. **AI-Powered Ticket Generator** 🎫
+### 5. **AI-Powered Ticket Generator** 🎫
 - **Where:** Navigate to `/tickets` or click "Tickets" in header
 - **What it does:** Generates development tickets with ML-based time estimates
 - **The tech:** GitHub API integration + keyword complexity analysis + historical velocity
@@ -421,13 +484,35 @@ Once the application is running, sign in with a demo account and explore:
   - Get ticket with estimated time, acceptance criteria, and similar historical tasks
   - Download as markdown file
 
-### 5. **Smart Trending Products** 📈
+### 6. **Smart Trending Products** 📈
 - **Where:** Homepage (for logged-out users) or "For You" section fallback
 - **What it does:** Shows popular products based on actual order frequency
 - **The tech:** Aggregates order quantities across all users
 - **Try it:** Sign out → homepage shows trending items
 
-### 6. **Favorites & Wishlist** ❤️
+### 7. **Shopping Assistant** 🤖
+- **Where**: Floating widget (bottom-right) or `/assistant` page
+- **What it does**: Deterministic product discovery without LLM costs, with optional GPT/Claude enhancement
+- **The tech**: Rule-based logic with feature flags, optional OpenAI/Anthropic integration
+- **Try it**: 
+  - Click assistant widget → ask "show me shirts"
+  - Search for products, get navigation help
+  - If LLM enabled (optional): better empty result handling and conversational responses
+
+### 8. **Interactive Testing Dashboard** 🧪 (Dev Mode Required)
+- **Where**: `/dev/testing` - Enable Dev Mode first (toggle in header for dev users)
+- **What it does**: Visual test runner with real-time results and coverage stats
+- **The awesome**: Run all tests from a beautiful UI without touching the terminal!
+- **Try it**:
+  - Sign in with `test@example.com` (already has dev role)
+  - Toggle Dev Mode in header
+  - Navigate to `/dev/testing`
+  - Click "Run Frontend Tests" or "Run All Tests"
+  - Watch tests execute with live output and see pass/fail indicators
+  - View coverage percentages for both frontend and backend
+  - **This is the best part!** - Makes testing actually enjoyable 🎉
+
+### 9. **Favorites & Wishlist** ❤️
 - **Where:** Any product card (heart icon)
 - **What it does:** Save products for later, influences recommendations
 - **Try it:** Click heart on products → visit `/favorites` to see saved items
@@ -513,15 +598,18 @@ This automated script:
 Detailed documentation available in separate files:
 
 - **[QUICKSTART.md](QUICKSTART.md)**: 60-second setup guide and troubleshooting
-- **[FEATURES.md](FEATURES.md)**: Complete feature list (200+ features implemented)
+- **[FEATURES.md](FEATURES.md)**: Complete feature list (220+ features implemented)
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**: Executive summary for technical assessment
 - **[ARCHITECTURE.md](ARCHITECTURE.md)**: System architecture diagrams, data flow, algorithms, and database schema
 - **[RECOMMENDATION-QUALITY-SYSTEM.md](RECOMMENDATION-QUALITY-SYSTEM.md)**: Deep dive into Bayesian rating quality system with mathematical explanations, implementation details, and examples
 - **[FOR-YOU-IMPLEMENTATION.md](FOR-YOU-IMPLEMENTATION.md)**: Complete guide to personalized recommendation system, collaborative filtering algorithms, and cold-start strategies
 - **[TICKET-GENERATOR-IMPLEMENTATION.md](TICKET-GENERATOR-IMPLEMENTATION.md)**: AI ticket generator architecture, ML estimation engine, and GitHub integration details
 - **[TICKET-GENERATOR-SETUP.md](TICKET-GENERATOR-SETUP.md)**: Step-by-step setup instructions for GitHub OAuth and ticket generator
+- **[ASSISTANT-LLM-INTEGRATION.md](ASSISTANT-LLM-INTEGRATION.md)**: Shopping assistant architecture, LLM integration, and feature flags
+- **[ASSISTANT-QUICKREF.md](ASSISTANT-QUICKREF.md)**: Quick reference for assistant configuration and testing
 - **[TESTING.md](TESTING.md)**: Testing philosophy, coverage goals, and how to write tests
 - **[WHAT-TESTS-DO.md](WHAT-TESTS-DO.md)**: Explanation of what each test suite validates
+- **[.github/copilot-instructions.md](.github/copilot-instructions.md)**: Coding standards and architecture patterns for maintaining consistent, high-quality code (makes AI assistants write better code!)
 
 ## 🧠 Machine Learning Algorithms Explained
 

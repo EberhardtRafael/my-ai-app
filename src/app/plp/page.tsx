@@ -37,22 +37,24 @@ export default async function ProductPage({ searchParams }: ProductPageProps) {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
-  let favoriteProductIds: number[] = [];
-  if (userId) {
-    try {
-      const query = `{ favorites(userId: ${userId}, activeOnly: true) { productId } }`;
-      const response = await fetch(`${process.env.NEXTAUTH_URL}/api/favorites`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-        cache: 'no-store',
-      });
-      const result = await response.json();
-      favoriteProductIds = (result?.data?.favorites || []).map((fav: any) => fav.productId);
-    } catch (error) {
-      console.error('Error fetching favorites:', error);
-    }
-  }
+  const favoriteProductIds = userId
+    ? await (async () => {
+        try {
+          const query = `{ favorites(userId: ${userId}, activeOnly: true) { productId } }`;
+          const response = await fetch(`${process.env.NEXTAUTH_URL}/api/favorites`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query }),
+            cache: 'no-store',
+          });
+          const result = await response.json();
+          return (result?.data?.favorites || []).map((fav: any) => fav.productId);
+        } catch (error) {
+          console.error('Error fetching favorites:', error);
+          return [];
+        }
+      })()
+    : [];
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">

@@ -34,6 +34,18 @@ Complete list of implemented features in the AI-Powered E-Commerce Platform.
 - ✅ Markdown ticket generation
 - ✅ Download functionality
 
+### Shopping Assistant (Deterministic AI)
+- ✅ Product discovery and search
+- ✅ Deterministic, rule-based logic (zero LLM cost)
+- ✅ Context-aware responses (search, recommendations, navigation)
+- ✅ Feature flag configuration system
+- ✅ Optional LLM enhancement (OpenAI/Anthropic)
+- ✅ Floating widget interface
+- ✅ Full-page assistant at /assistant
+- ✅ Quick actions (add-to-cart, view details, wishlist)
+- ✅ Product quick links
+- ✅ Category navigation help
+
 ## 🛒 E-Commerce Features
 
 ### Product Catalog
@@ -106,7 +118,8 @@ Complete list of implemented features in the AI-Powered E-Commerce Platform.
 - ✅ App Router architecture
 - ✅ Dynamic routing
 - ✅ TypeScript throughout
-- ✅ Tailwind CSS styling
+- ✅ Tailwind CSS 4 styling
+- ✅ Internationalization (i18n) with next-intl
 - ✅ Responsive design
 - ✅ Loading states
 - ✅ Error boundaries
@@ -117,6 +130,7 @@ Complete list of implemented features in the AI-Powered E-Commerce Platform.
 - ✅ Cart context
 - ✅ Favorites context
 - ✅ Session context
+- ✅ Localization context (i18n)
 - ✅ Global state synchronization
 
 ### Backend (Python Flask)
@@ -387,16 +401,16 @@ Complete list of implemented features in the AI-Powered E-Commerce Platform.
 
 ## Feature Count Summary
 
-- **ML/AI Features**: 15+
+- **ML/AI Features**: 20+ (including Shopping Assistant with optional LLM)
 - **E-Commerce Features**: 50+
-- **Technical Features**: 60+
+- **Technical Features**: 65+ (including i18n)
 - **Testing Features**: 20+
 - **DevOps Features**: 15+
-- **Documentation**: 10+ files
-- **UI Components**: 25+
+- **Documentation**: 12+ files
+- **UI Components**: 30+ (including assistant components)
 - **Security Features**: 10+
 
-**Total Features Implemented**: 200+
+**Total Features Implemented**: 220+
 
 ---
 

@@ -3,34 +3,36 @@
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Browser                             │
-│                     http://localhost:3000                        │
-└────────────────────────────┬────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                         User Browser                           │
+│                     http://localhost:3000                      │
+└────────────────────────────┬───────────────────────────────────┘
                              │
                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Next.js Frontend (Port 3000)                  │
+┌────────────────────────────────────────────────────────────────┐
+│                    Next.js Frontend (Port 3000)                │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  App Router (Next.js 15)                                 │  │
-│  │  - /              → Personalized "For You"              │  │
+│  │  App Router (Next.js 15.5)                               │  │
+│  │  - /              → Personalized "For You"               │  │
 │  │  - /plp           → Product Listing                      │  │
-│  │  - /pdp/:id       → Product Details + Reviews           │  │
-│  │  - /cart          → Cart + Recommendations              │  │
-│  │  - /tickets       → AI Ticket Generator                 │  │
+│  │  - /pdp/:id       → Product Details + Reviews            │  │
+│  │  - /cart          → Cart + Recommendations               │  │
+│  │  - /assistant     → Shopping Assistant                   │  │
+│  │  - /tickets       → AI Ticket Generator                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  Context Providers                                       │  │
-│  │  - CartContext    → Global cart state                   │  │
-│  │  - FavoritesContext → Wishlist management               │  │
-│  │  - SessionWrapper → NextAuth integration                │  │
+│  │  - CartContext          → Global cart state              │  │
+│  │  - FavoritesContext     → Wishlist management            │  │
+│  │  - LocalizationContext  → i18n & translations            │  │
+│  │  - SessionWrapper       → NextAuth integration           │  │
 │  └──────────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────────┘
+└────────────────────────────┬───────────────────────────────────┘
                              │
                              │ GraphQL/REST
                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Python Flask Backend (Port 8000)               │
+┌────────────────────────────────────────────────────────────────┐
+│                   Python Flask Backend (Port 8000)             │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  GraphQL API (Strawberry)                                │  │
 │  │  - /graphql       → Main API endpoint                    │  │
@@ -55,9 +57,9 @@
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  AI Ticket Generator                                     │  │
-│  │  - GitHub API client with caching                       │  │
-│  │  - ML-based time estimation                             │  │
-│  │  - Similarity matching for historical tasks             │  │
+│  │  - GitHub API client with caching                        │  │
+│  │  - ML-based time estimation                              │  │
+│  │  - Similarity matching for historical tasks              │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  Database Layer (SQLite)                                 │  │
@@ -66,7 +68,7 @@
 │  │  - Orders & Cart Items                                   │  │
 │  │  - Reviews & Ratings                                     │  │
 │  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
                              │
                              ▼
                     ┌────────────────────┐
@@ -214,11 +216,12 @@ User can download as .md file
 ## Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 15.5 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Auth**: NextAuth.js
-- **State**: React Context API
+- **i18n**: next-intl (internationalization)
+- **State**: React Context API (Cart, Favorites, Session, Localization)
 - **Testing**: Jest + React Testing Library
 - **Linting**: Biome (ESLint/Prettier replacement)
 

@@ -17,11 +17,15 @@ Your AI-Powered E-Commerce Platform now has **instant credibility** with profess
 6. **`dev-start.sh`** - Non-Docker development setup (3 minutes)
 
 #### 📚 Documentation
-7. **`README.md`** - Completely rewritten (485 lines)
-   - Badges showing tech stack
+7. **`README.md`** - Completely rewritten and updated (702 lines)
+   - Badges showing tech stack (Next.js 15.5, i18n, etc.)
    - 3 deployment methods with comparison
-   - Demo account credentials
-   - Interactive feature tour
+   - Demo account credentials with guest mode
+   - Interactive feature tour (9 features!)
+   - Full authentication system documented (sign up, SSO, guest, password recovery)
+   - Shopping Assistant feature
+   - Testing Dashboard emphasized (it's awesome!)
+   - Copilot instructions reference
    - Docker commands reference
    - Testing instructions
    
@@ -63,14 +67,14 @@ Your AI-Powered E-Commerce Platform now has **instant credibility** with profess
 - Manual 2-terminal setup
 
 **After (Production-Ready Documentation):**
-- 485 lines of comprehensive content
-- **8 badges** showing tech stack and capabilities
-- **Demo account table** with 3 pre-configured users
-- **6 feature tours** with step-by-step guidance
+- 702 lines of comprehensive content
+- **9 badges** showing tech stack and capabilities (including i18n)
+- **Demo account table** with 4 options (3 accounts + guest mode)
+- **9 feature tours** with step-by-step guidance (including Auth, Shopping Assistant, Testing Dashboard!)
 - **3 deployment options** with comparison table
 - **Docker commands** reference section
 - **Mathematical formulas** (Wilson Score)
-- **Links to 10 documentation files**
+- **Links to 13 documentation files** (including Assistant docs + Copilot instructions)
 - **Use cases** for different technical roles
 
 ### 🌟 Key Enhancements
@@ -97,7 +101,7 @@ Your AI-Powered E-Commerce Platform now has **instant credibility** with profess
 ### 📈 Documentation Structure
 
 ```
-📄 README.md (Main hub - 485 lines)
+📄 README.md (Main hub - 702 lines)
 ├── 🚀 QUICKSTART.md (60-second guide)
 ├── 📋 FEATURES.md (200+ features)
 ├── 📊 PROJECT_SUMMARY.md (Executive summary)

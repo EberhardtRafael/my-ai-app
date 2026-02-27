@@ -475,8 +475,8 @@ class Query:
     @strawberry.field
     def trending(self, hours: int = 48, limit: int = 10) -> List[ProductType]:
         """
-        Get trending products based on cart additions in the last N hours
-        Simple COUNT query showing social proof of "hot items everyone's buying"
+        Get trending products based on cart additions and orders in the last N hours
+        Counts all items added to carts or purchased across all users
         """
         from datetime import timedelta
         from sqlalchemy import func
@@ -492,8 +492,9 @@ class Query:
             )
             .join(Order)
             .filter(
-                OrderItem.added_at >= cutoff_time,
-                Order.status == "cart"  # Only count items still in carts
+                OrderItem.added_at >= cutoff_time
+                # Count items from both active carts AND completed orders
+                # to reflect true purchasing trends across all users
             )
             .group_by(OrderItem.product_id)
             .order_by(func.count(OrderItem.id).desc())

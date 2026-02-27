@@ -16,6 +16,7 @@
 3. **Sign in with demo account:**
    - Email: `test@example.com`
    - Password: `test`
+   - Or click **"Continue as Guest"** to try without signing in!
 
 4. **Explore the features!**
 
@@ -53,10 +54,13 @@
 
 ## 🎯 What to Try
 
-1. **Personalized "For You" Section** - ML recommendations based on purchase history
-2. **Smart Cart Suggestions** - Hybrid collaborative filtering in action
-3. **Leave a Review** - See Bayesian quality adjustment affect recommendations
-4. **AI Ticket Generator** - Visit `/tickets` for ML-powered task estimation
+1. **Full Auth System** - Sign up, GitHub SSO, Guest mode, Password recovery
+3. **Shopping Assistant** - Visit `/assistant` or click the floating widget for AI-powered product discovery
+4. **Testing Dashboard** - Enable Dev Mode → visit `/dev/testing` for the amazing visual test runner! 🎉
+5. **Smart Cart Suggestions** - Hybrid collaborative filtering in action
+6. **Leave a Review** - See Bayesian quality adjustment affect recommendations
+7. **Leave a Review** - See Bayesian quality adjustment affect recommendations
+5. **AI Ticket Generator** - Visit `/tickets` for ML-powered task estimation (dev mode)
 
 ## 📖 Full Documentation
 

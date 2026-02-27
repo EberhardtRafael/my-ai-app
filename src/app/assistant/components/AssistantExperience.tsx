@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import InfoMessage from '@/components/ui/InfoMessage';
@@ -12,6 +13,7 @@ import AssistantSuggestionsList from './AssistantSuggestionsList';
 import AssistantTopProductsList from './AssistantTopProductsList';
 
 const ASSISTANT_SESSION_STORAGE_KEY = 'assistant-chat-session-v1';
+const ASSISTANT_USER_ID_KEY = 'assistant-last-user-id';
 
 type AssistantSessionState = {
   input: string;
@@ -25,6 +27,7 @@ type AssistantExperienceProps = {
 };
 
 export default function AssistantExperience({ mode = 'page' }: AssistantExperienceProps) {
+  const { data: session } = useSession();
   const isFloating = mode === 'floating';
   const textareaId = isFloating ? 'assistant-input-floating' : 'assistant-input-page';
   const [input, setInput] = useState('');
@@ -40,6 +43,35 @@ export default function AssistantExperience({ mode = 'page' }: AssistantExperien
   const [isLoading, setIsLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<AssistantResponse | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Clear conversation history when user changes (login/logout/switch account)
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const currentUserId = session?.user?.id || 'guest';
+    const lastUserId = sessionStorage.getItem(ASSISTANT_USER_ID_KEY);
+
+    if (lastUserId && lastUserId !== currentUserId) {
+      // User changed - clear conversation history
+      console.log('User changed, clearing assistant conversation history');
+      sessionStorage.removeItem(ASSISTANT_SESSION_STORAGE_KEY);
+      
+      // Reset to initial state
+      setInput('');
+      setMessages([
+        {
+          id: 1,
+          role: 'assistant',
+          content:
+            'I am your free site assistant. Ask me about products, pricing, recommendations, orders, cart, favorites, or tickets.',
+        },
+      ]);
+      setMessageId(2);
+      setLastResponse(null);
+    }
+
+    sessionStorage.setItem(ASSISTANT_USER_ID_KEY, currentUserId);
+  }, [session?.user?.id, isHydrated]);
 
   useEffect(() => {
     try {

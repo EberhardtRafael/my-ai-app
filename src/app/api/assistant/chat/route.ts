@@ -1,4 +1,19 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import {
+  buildIntentCorpus,
+  getCategoryHints,
+  getCategorySynonyms,
+  getColorSynonyms,
+  getSiteHelpFromKnowledge,
+  getStopwords,
+  loadFeatureFlags,
+  shouldUseExternalizedKnowledge,
+} from '@/utils/assistantConfig';
+import {
+  handleFullLLMConversation,
+} from '@/utils/assistantLLM';
 
 type AssistantIntent =
   | 'greeting'
@@ -241,14 +256,20 @@ const RULE_BOOSTS: Record<AssistantIntent, RegExp[]> = {
 };
 
 function tokenize(text: string): string[] {
+  // Use externalized stopwords if enabled, otherwise use legacy
+  const stopwords = shouldUseExternalizedKnowledge() ? getStopwords() : STOPWORDS;
+
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter((token) => token.length > 1 && !STOPWORDS.has(token));
+    .filter((token) => token.length > 1 && !stopwords.has(token));
 }
 
 function buildBayesModel() {
+  // Use externalized intent corpus if enabled, otherwise use legacy
+  const intentCorpus = shouldUseExternalizedKnowledge() ? buildIntentCorpus() : INTENT_CORPUS;
+
   const wordCounts: Record<AssistantIntent, Record<string, number>> = {
     greeting: {},
     product_search: {},
@@ -279,7 +300,7 @@ function buildBayesModel() {
   const vocabulary = new Set<string>();
 
   for (const intent of INTENTS) {
-    const samples = INTENT_CORPUS[intent];
+    const samples = intentCorpus[intent] || [];
     priors[intent] = samples.length;
 
     for (const sample of samples) {
@@ -561,13 +582,20 @@ function extractCharacteristics(message: string): string[] {
 
 function extractCategory(message: string): string {
   const text = message.toLowerCase();
-  for (const [alias, canonical] of Object.entries(CATEGORY_SYNONYMS)) {
+
+  // Use externalized synonyms if enabled, otherwise use legacy
+  const categorySynonyms = shouldUseExternalizedKnowledge()
+    ? getCategorySynonyms()
+    : CATEGORY_SYNONYMS;
+  const categoryHints = shouldUseExternalizedKnowledge() ? getCategoryHints() : CATEGORY_HINTS;
+
+  for (const [alias, canonical] of Object.entries(categorySynonyms)) {
     if (text.includes(alias)) {
       return canonical;
     }
   }
 
-  const matched = CATEGORY_HINTS.find((hint) => text.includes(hint));
+  const matched = categoryHints.find((hint) => text.includes(hint));
   return matched || '';
 }
 
@@ -584,7 +612,10 @@ function extractBudget(message: string): number | null {
 function extractColor(message: string): string {
   const text = message.toLowerCase();
 
-  for (const [synonym, canonical] of Object.entries(COLOR_SYNONYMS)) {
+  // Use externalized synonyms if enabled, otherwise use legacy
+  const colorSynonyms = shouldUseExternalizedKnowledge() ? getColorSynonyms() : COLOR_SYNONYMS;
+
+  for (const [synonym, canonical] of Object.entries(colorSynonyms)) {
     if (text.includes(synonym)) {
       return canonical;
     }
@@ -760,9 +791,17 @@ function buildStatsNarrative(stats: ProductStats, intent: AssistantIntent): stri
   return `Quick stats: $${stats.minPrice.toFixed(2)} to $${stats.maxPrice.toFixed(2)} (median $${stats.medianPrice.toFixed(2)}).`;
 }
 
-function formatProducts(products: ProductHit[]): string {
+async function formatProducts(
+  products: ProductHit[],
+  userMessage: string = '',
+  searchTerm: string = '',
+  category: string = '',
+  color: string = '',
+  budget: number | null = null
+): Promise<string> {
   if (products.length === 0) {
-    return 'I could not find matching products right now. Try another keyword or browse the catalog.';
+    console.log('[LLM] Empty results - calling LLM');
+    return await generateEmptyResultResponse(userMessage, searchTerm, category, color, budget);
   }
 
   const lines = products.slice(0, 5).map((item) => {
@@ -853,6 +892,15 @@ async function fetchProductsWithFallback(
 }
 
 function buildSiteHelpReply(message: string): string {
+  // Try to use externalized knowledge if enabled
+  if (shouldUseExternalizedKnowledge()) {
+    const knowledgeResponse = getSiteHelpFromKnowledge(message);
+    if (knowledgeResponse) {
+      return knowledgeResponse;
+    }
+  }
+
+  // Legacy fallback behavior
   const text = message.toLowerCase();
 
   if (
@@ -1113,6 +1161,9 @@ function buildQuickLinks(
 
 export async function POST(request: Request) {
   try {
+    // Load feature flags at request time
+    const featureFlags = loadFeatureFlags();
+
     const body = (await request.json()) as { message?: string };
     const message = (body.message || '').trim();
 
@@ -1120,85 +1171,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
+    // Get user session to tie conversation to user account
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    // Use user ID as profile_id for logged-in users, UUID for guests
     const cookies = parseCookieHeader(request.headers.get('cookie'));
-    const profileId = cookies.assistant_profile_id || crypto.randomUUID();
+    const profileId = userId
+      ? `user-${userId}` // Logged-in users: use "user-{id}"
+      : cookies.assistant_profile_id || crypto.randomUUID(); // Guests: UUID from cookie or new
 
     const currentStyleProfile = await loadStyleProfile(profileId);
-    const { intent, confidence, distribution } = classifyIntent(message);
-    const nextStyleProfile = updateStyleProfile(currentStyleProfile, message, intent);
+
+    // Fetch broad product catalog for LLM to choose from
+    console.log('[FULL LLM] Fetching product catalog');
+    const allProducts = await fetchProducts('', '', '', 100);
+
+    // Let LLM handle everything: intent, product selection, response
+    console.log('[FULL LLM] Calling handleFullLLMConversation');
+    const { reply, productIds, intent } = await handleFullLLMConversation(message, allProducts);
+
+    // Filter products based on LLM's recommendation
+    const products = allProducts.filter((p) => productIds.includes(p.id));
+
+    console.log('[FULL LLM] LLM selected', products.length, 'products');
+
+    // Update style profile with detected intent
+    const nextStyleProfile = updateStyleProfile(
+      currentStyleProfile,
+      message,
+      intent as AssistantIntent
+    );
+
+    // Legacy fields for compatibility
     const category = extractCategory(message);
     const searchTerm = extractSearchTerm(message);
     const budget = extractBudget(message);
     const color = extractColor(message);
     const characteristics = extractCharacteristics(message);
-
-    let products: ProductHit[] = [];
-    let baseReply = '';
-
-    if (intent === 'product_search' || intent === 'category_browse' || intent === 'pricing') {
-      products = await fetchProductsWithFallback(
-        message,
-        searchTerm,
-        category,
-        budget,
-        color,
-        characteristics
-      );
-      baseReply = formatProducts(products);
-    } else if (intent === 'recommendation') {
-      products = await fetchProductsWithFallback(
-        message,
-        searchTerm || 'popular',
-        category,
-        budget,
-        color,
-        characteristics
-      );
-      baseReply =
-        `Based on your request, I suggest starting with highly-rated options in this area.\n` +
-        formatProducts(products);
-    } else if (intent === 'greeting') {
-      baseReply =
-        'Hi! I can help you discover products, compare prices, and navigate orders, favorites, cart, or tickets.';
-    } else if (intent === 'site_help') {
-      if (
-        shouldShowProductListForMessage(intent, message) &&
-        (category || searchTerm || color || characteristics.length > 0)
-      ) {
-        products = await fetchProductsWithFallback(
-          message,
-          searchTerm,
-          category,
-          budget,
-          color,
-          characteristics
-        );
-      }
-      baseReply = buildSiteHelpReply(message);
-      if (products.length > 0 && shouldShowProductListForMessage(intent, message)) {
-        baseReply = `${baseReply}\n\n${formatProducts(products)}`;
-      }
-    } else {
-      baseReply =
-        'I can help with product discovery, pricing, recommendations, and navigation across the site.';
-    }
+    const confidence = 0.85; // LLM is always confident
+    const distribution: IntentDistribution = {
+      greeting: 0,
+      product_search: 0,
+      category_browse: 0,
+      pricing: 0,
+      recommendation: 0,
+      site_help: 0,
+      fallback: 0,
+      [intent as AssistantIntent]: 1.0,
+    };
+    const useLegacyFallback = false;
 
     const productStats = calculateProductStats(products);
-    const statsNarrative = buildStatsNarrative(productStats, intent);
-    const reply = buildConversationalReply(
-      message,
-      intent,
-      confidence,
-      baseReply,
-      statsNarrative,
-      nextStyleProfile
-    );
-
     const suggestions = buildPersonalizedSuggestions(nextStyleProfile);
     const assistantSession = `${profileId.slice(0, 8)}-${Date.now().toString(36)}`;
     const quickLinks = buildQuickLinks(
       message,
-      intent,
+      intent as AssistantIntent,
       products,
       searchTerm,
       category,
@@ -1225,17 +1254,25 @@ export async function POST(request: Request) {
         styleProfile: nextStyleProfile,
         profileId,
         assistantSession,
-        deterministic: true,
+        deterministic: false, // LLM-generated responses are non-deterministic
+        // Feature flag metadata
+        assistantMode: featureFlags.assistantMode,
+        usedLegacyFallback: useLegacyFallback,
+        usedExternalizedKnowledge: shouldUseExternalizedKnowledge(),
+        featureFlagsVersion: featureFlags.metadata.version,
       },
     });
 
     await saveStyleProfile(profileId, nextStyleProfile);
 
-    response.cookies.set('assistant_profile_id', profileId, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-      sameSite: 'lax',
-    });
+    // Only set cookie for guest users (logged-in users use user-based profile_id)
+    if (!userId) {
+      response.cookies.set('assistant_profile_id', profileId, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: 'lax',
+      });
+    }
 
     return response;
   } catch (error) {

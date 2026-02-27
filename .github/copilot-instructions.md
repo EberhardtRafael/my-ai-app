@@ -43,6 +43,7 @@
 - Avoid duplication (DRY). If similar structures appear more than once, refactor into reusable components/helpers.
 - Keep implementations clean and low-bureaucracy: minimal, clear abstractions over scattered ad hoc code.
 - **Extract Mapped Data**: When mapping over an array/object in JSX, extract it to a named constant above the JSX with a meaningful name (e.g., `shippingAddressLines`, `paymentBreakdownLines`, `navigationItems`). Inline arrays should only be used for simple, obvious cases (2-3 static items max).
+- **Prefer immutability**: Default to `const` over `let`. When a value needs to be derived conditionally or from a collection, use expressions and functional patterns (ternary, map, filter, reduce, flatMap, etc.) rather than imperative reassignment. Reserve `let` for legitimate accumulation, loops, or complex multi-step derivations where functional approaches would harm clarity.
 
 ## Styling & Consistency
 - Reuse existing component primitives and variants for consistent behavior and styling.
