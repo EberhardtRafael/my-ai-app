@@ -42,7 +42,7 @@ This project goes beyond typical e-commerce implementations by integrating:
 
 ## Key Metrics
 
-- **8 major features** implemented (recommendations, reviews, cart, favorites, tickets, auth, etc.)
+- **10+ major features** implemented (recommendations, reviews, cart, favorites, assistant, tickets, auth, i18n, etc.)
 - **15+ ML/statistical algorithms** in production
 - **3 deployment options** (Docker, dev script, manual) for maximum accessibility
 - **60-second setup** with quickstart script
@@ -77,7 +77,7 @@ Not academic exercises—these are algorithms used by Amazon, Netflix, Reddit:
 
 ## Technologies Used
 
-**Frontend**: Next.js 15, TypeScript, Tailwind CSS 4, NextAuth.js, React Testing Library, Jest
+**Frontend**: Next.js 15.5, TypeScript, Tailwind CSS 4, NextAuth.js, next-intl (i18n), React Testing Library, Jest
 
 **Backend**: Python 3.11+, Flask, Strawberry GraphQL, SQLite, NumPy, scikit-learn, pytest
 

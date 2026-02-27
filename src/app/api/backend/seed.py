@@ -1,6 +1,7 @@
 from sqlalchemy import func
-from models import Product, ProductRelation, Variant, Review, User, session, init_db
+from models import Product, ProductRelation, Variant, Review, User, session, init_db, engine, Base
 import random
+import sys
 from werkzeug.security import generate_password_hash
 
 # Realistic product data for better ML recommendations
@@ -87,28 +88,174 @@ PRODUCT_CATALOG = {
     }
 }
 
-def seed_data():
+DEMO_USERS = [
+    {"username": "test", "email": "test@example.com", "password": "test"},
+    {"username": "dev", "email": "dev@example.com", "password": "dev"},
+    {"username": "john", "email": "john@example.com", "password": "password123"},
+    {"username": "jane", "email": "jane@example.com", "password": "password123"},
+]
+
+
+def safe_init_db():
+    """Initialize database tables without dropping existing data."""
+    Base.metadata.create_all(engine)
+
+
+def backup_existing_users():
+    """Backup all existing users before destructive operations."""
+    try:
+        users = session.query(User).all()
+        return [{
+            'username': u.username,
+            'email': u.email,
+            'password_hash': u.password_hash
+        } for u in users]
+    except:
+        return []
+
+
+def restore_users(backed_up_users):
+    """Restore users from backup, skipping duplicates."""
+    if not backed_up_users:
+        return 0
+    
+    restored = 0
+    for user_data in backed_up_users:
+        # Check if user already exists
+        existing = session.query(User).filter(
+            (User.username == user_data['username']) | 
+            (User.email == user_data['email'])
+        ).first()
+        
+        if not existing:
+            user = User(
+                username=user_data['username'],
+                email=user_data['email'],
+                password_hash=user_data['password_hash']
+            )
+            session.add(user)
+            restored += 1
+    
+    if restored > 0:
+        session.commit()
+        print(f"✓ Restored {restored} existing users")
+    return restored
+
+
+def seed_demo_users_if_needed():
+    """Add demo users only if they don't exist."""
+    added = 0
+    for user_data in DEMO_USERS:
+        existing = session.query(User).filter(
+            (User.username == user_data['username']) | 
+            (User.email == user_data['email'])
+        ).first()
+        
+        if not existing:
+            password_hash = generate_password_hash(user_data["password"])
+            user = User(
+                username=user_data["username"],
+                email=user_data["email"],
+                password_hash=password_hash
+            )
+            session.add(user)
+            added += 1
+    
+    if added > 0:
+        session.commit()
+        print(f"✓ Added {added} demo users")
+    else:
+        print("✓ Demo users already exist")
+    return added
+
+
+def safe_seed_data():
+    """Safely seed data while preserving existing users.
+    
+    This function:
+    - Creates tables if they don't exist (doesn't drop)
+    - Preserves ALL existing users
+    - Only adds products/data if database is empty
+    - Safe for production use
+    """
+    print("\n🔒 SAFE SEED MODE - Preserving existing data")
+    print("=" * 50)
+    
+    # Initialize tables without dropping
+    safe_init_db()
+    
+    # Check if data already exists
+    existing_products = session.query(Product).count()
+    existing_users = session.query(User).count()
+    
+    print(f"Current database state:")
+    print(f"  Users: {existing_users}")
+    print(f"  Products: {existing_products}")
+    
+    if existing_products > 0:
+        print("\n⚠️  Database already contains products.")
+        print("To reseed products, use --force-reseed flag (DESTRUCTIVE)")
+        print("Only checking/adding demo users...\n")
+        seed_demo_users_if_needed()
+        return
+    
+    # Add demo users if needed
+    print("\nSeeding demo users...")
+    seed_demo_users_if_needed()
+    
+    # Seed products (only if database was empty)
+    print("\nSeeding products...")
+    _seed_products()
+    print("\n✓ Safe seed completed successfully!")
+
+
+def destructive_reseed():
+    """⚠️  DESTRUCTIVE: Drops all tables and reseeds.
+    
+    This function:
+    - BACKS UP existing users first
+    - Drops ALL tables (products, orders, reviews, etc.)
+    - Recreates tables from scratch
+    - RESTORES backed up users
+    - Seeds fresh demo data
+    
+    Use ONLY for development/testing!
+    """
+    print("\n⚠️  DESTRUCTIVE RESEED MODE")
+    print("=" * 50)
+    print("This will:")
+    print("  1. Backup existing users")
+    print("  2. DROP ALL TABLES (products, orders, reviews, etc.)")
+    print("  3. Restore your user accounts")
+    print("  4. Seed fresh demo data")
+    print()
+    
+    # Backup users before destruction
+    print("Backing up existing users...")
+    backed_up_users = backup_existing_users()
+    print(f"✓ Backed up {len(backed_up_users)} users")
+    
+    # Drop and recreate tables
+    print("\n⚠️  Dropping all tables...")
     init_db()
+    print("✓ Tables recreated")
     
-    # Seed users
-    print("Seeding users...")
-    users = [
-        {"username": "test", "email": "test@example.com", "password": "test"},
-        {"username": "dev", "email": "dev@example.com", "password": "dev"},
-        {"username": "john", "email": "john@example.com", "password": "password123"},
-        {"username": "jane", "email": "jane@example.com", "password": "password123"},
-    ]
+    # Restore backed up users
+    print("\nRestoring your user accounts...")
+    restore_users(backed_up_users)
     
-    for user_data in users:
-        password_hash = generate_password_hash(user_data["password"])
-        user = User(
-            username=user_data["username"],
-            email=user_data["email"],
-            password_hash=password_hash
-        )
-        session.add(user)
-    session.commit()
-    print(f"Created {len(users)} users")
+    # Add demo users
+    print("\nAdding demo users...")
+    seed_demo_users_if_needed()
+    
+    # Seed fresh products
+    print("\nSeeding products...")
+    _seed_products()
+    print("\n✓ Destructive reseed completed!")
+
+
+def _seed_products():
+    """Internal function to seed products, variants, and relations."""
     
     # Seed products with rich attributes
     print("Seeding products with enhanced attributes...")
@@ -282,5 +429,29 @@ def sync_product_ratings_from_reviews():
 
     session.commit()
 
+
 if __name__ == "__main__":
-    seed_data()
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == '--force-reseed':
+        print("\n" + "!" * 60)
+        print("⚠️  WARNING: DESTRUCTIVE OPERATION")
+        print("!" * 60)
+        print("\nThis will DROP all products, orders, and reviews!")
+        print("Your user accounts will be preserved.\n")
+        
+        response = input("Type 'yes' to continue: ")
+        if response.lower() == 'yes':
+            destructive_reseed()
+        else:
+            print("\nAborted.")
+            sys.exit(1)
+    else:
+        if len(sys.argv) > 1:
+            print(f"\nUnknown argument: {sys.argv[1]}")
+            print("\nUsage:")
+            print("  python3 seed.py              # Safe mode (preserves data)")
+            print("  python3 seed.py --force-reseed  # Destructive mode (requires confirmation)")
+            sys.exit(1)
+        
+        safe_seed_data()

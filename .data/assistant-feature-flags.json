@@ -1,0 +1,25 @@
+{
+  "assistantMode": "hybrid",
+  "enableHybridMode": true,
+  "enableLegacyFallback": false,
+  "confidenceThreshold": 0.0,
+  "enableKnowledgeRetrieval": false,
+  "enableSchemaValidation": false,
+  "enableLLM": true,
+  "llmProvider": "openai",
+  "llmModel": "gpt-4o-mini",
+  "llmMaxTokens": 300,
+  "flags": {
+    "useExternalizedKnowledge": false,
+    "useStructuredResponses": false,
+    "enableContextualHelp": false,
+    "enableDebugMode": false,
+    "useLLMForEmptyResults": true,
+    "useLLMForConversation": true
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-02-26T00:00:00.000Z",
+    "description": "Assistant feature flags for safe incremental rollout - LLM ENABLED"
+  }
+}

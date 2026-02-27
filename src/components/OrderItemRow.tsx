@@ -32,7 +32,7 @@ export default function OrderItemRow({
           {t('orders.color')}: {color} | {t('orders.size')}: {size}
         </p>
         <p className="text-sm text-gray-600">
-          {t('orders.quantity')}: {quantity}
+          {t('orders.quantity', { count: quantity })}
         </p>
       </div>
       <div className="text-right">

@@ -1,0 +1,226 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-26T00:00:00.000Z",
+  "description": "Externalized assistant knowledge base for help content, site navigation, and intent-specific guidance",
+  
+  "intents": {
+    "greeting": {
+      "displayName": "Greeting",
+      "description": "User is greeting the assistant or initiating conversation",
+      "examples": [
+        "hi there",
+        "hello",
+        "good morning",
+        "hey assistant",
+        "hi",
+        "hey there"
+      ]
+    },
+    "product_search": {
+      "displayName": "Product Search",
+      "description": "User wants to find specific products matching criteria",
+      "examples": [
+        "find running shoes",
+        "show me black jacket",
+        "i want to buy a shirt",
+        "help me find products",
+        "looking for blue pants"
+      ]
+    },
+    "category_browse": {
+      "displayName": "Category Browse",
+      "description": "User wants to browse products by category",
+      "examples": [
+        "browse jackets",
+        "show categories",
+        "show me dresses",
+        "what pants do you have",
+        "show all shoes"
+      ]
+    },
+    "pricing": {
+      "displayName": "Pricing Query",
+      "description": "User interested in price, budget, or value-oriented search",
+      "examples": [
+        "cheap options under 100",
+        "what is the price",
+        "budget products",
+        "show affordable shoes",
+        "under fifty dollars"
+      ]
+    },
+    "recommendation": {
+      "displayName": "Recommendation Request",
+      "description": "User wants personalized suggestions or recommendations",
+      "examples": [
+        "recommend me good products",
+        "best for me",
+        "similar to running shoes",
+        "suggest top rated items",
+        "what should I buy"
+      ]
+    },
+    "site_help": {
+      "displayName": "Site Help",
+      "description": "User needs help navigating the site or understanding features",
+      "examples": [
+        "how do i checkout",
+        "where are my orders",
+        "how to use favorites",
+        "how do i login",
+        "what is dev mode"
+      ]
+    },
+    "fallback": {
+      "displayName": "Fallback",
+      "description": "Intent unclear or unmatched",
+      "examples": [
+        "help",
+        "not sure",
+        "something else"
+      ]
+    }
+  },
+
+  "siteHelp": {
+    "orders": {
+      "keywords": ["order", "orders", "purchase history", "my orders"],
+      "shortAnswer": "View your order history in the Orders page at /orders.",
+      "detailedAnswer": "You can view all past orders with order details, shipping information, and payment breakdown on the Orders page. Each order shows status, items purchased, and total cost.",
+      "quickLinks": [
+        { "label": "Open orders", "href": "/orders", "kind": "location" }
+      ]
+    },
+    "cart": {
+      "keywords": ["cart", "shopping cart", "basket"],
+      "shortAnswer": "Access your cart at /cart to review items before checkout.",
+      "detailedAnswer": "The cart page shows all items you've added, with quantity controls and price totals. From the cart you can proceed to checkout or continue shopping.",
+      "quickLinks": [
+        { "label": "Go to cart", "href": "/cart", "kind": "location" },
+        { "label": "Go to checkout", "href": "/checkout", "kind": "location" }
+      ]
+    },
+    "checkout": {
+      "keywords": ["checkout", "buy", "purchase", "pay"],
+      "shortAnswer": "Complete your purchase on the Checkout page at /checkout.",
+      "detailedAnswer": "The checkout flow collects shipping and payment information. You can review your order summary before finalizing the purchase.",
+      "quickLinks": [
+        { "label": "Go to checkout", "href": "/checkout", "kind": "location" }
+      ]
+    },
+    "favorites": {
+      "keywords": ["favorite", "favorites", "wishlist", "saved items"],
+      "shortAnswer": "Save products to your Favorites page for easy access later.",
+      "detailedAnswer": "Use the heart icon on product cards or detail pages to save items. View all saved items on the Favorites page at /favorites.",
+      "quickLinks": [
+        { "label": "Open favorites", "href": "/favorites", "kind": "location" }
+      ]
+    },
+    "tickets": {
+      "keywords": ["ticket", "tickets", "ticket generator"],
+      "shortAnswer": "The Tickets page can generate implementation tickets and now includes analytics/history.",
+      "detailedAnswer": "The ticket generator creates structured GitHub-style implementation tickets based on your requirements. Access it at /tickets to generate tickets, view history, and see analytics.",
+      "quickLinks": [
+        { "label": "Open tickets", "href": "/tickets", "kind": "location" }
+      ]
+    },
+    "auth": {
+      "keywords": ["login", "sign in", "account", "authentication"],
+      "shortAnswer": "Use Sign In from the header menu or /auth/signin to access personalized recommendations, profile, orders, and role-based dev features.",
+      "detailedAnswer": "Authentication enables personalized experiences including order history, saved favorites, profile management, and role-based access to developer features.",
+      "quickLinks": [
+        { "label": "Open sign in", "href": "/auth/signin", "kind": "location" }
+      ]
+    },
+    "profile": {
+      "keywords": ["profile", "account settings", "my account"],
+      "shortAnswer": "Manage your account on the Profile page at /profile.",
+      "detailedAnswer": "View and edit your profile information, preferences, and account settings.",
+      "quickLinks": [
+        { "label": "Open profile", "href": "/profile", "kind": "location" }
+      ]
+    },
+    "devMode": {
+      "keywords": ["role", "roles", "dev mode", "developer mode", "testing", "test", "qa"],
+      "shortAnswer": "Dev mode and roles are managed on the /dev/testing page.",
+      "detailedAnswer": "Developer mode provides role-based access testing, session management controls, and QA workflows. Access the testing dashboard at /dev/testing to switch roles, manage tokens, and test different user experiences.",
+      "quickLinks": [
+        { "label": "Open dev testing", "href": "/dev/testing", "kind": "location" }
+      ]
+    },
+    "general": {
+      "keywords": ["help", "what can you do", "capabilities"],
+      "shortAnswer": "I can help with products, orders, cart/checkout, favorites, tickets, sign-in/profile, roles/dev mode, token/session behavior, and testing workflows.",
+      "detailedAnswer": "I'm your shopping assistant for this e-commerce site. I can help you discover products, compare prices, navigate features, and answer questions about orders, favorites, checkout, ticket generation, authentication, and testing workflows.",
+      "quickLinks": [
+        { "label": "Browse all products", "href": "/plp", "kind": "location" },
+        { "label": "Open assistant home", "href": "/assistant", "kind": "location" }
+      ]
+    }
+  },
+
+  "responseTemplates": {
+    "greeting": {
+      "casual": [
+        "Hi! I can help you discover products, compare prices, and navigate orders, favorites, cart, or tickets.",
+        "Hey there! Looking for products, checking orders, or need help navigating the site?",
+        "Hello! I'm here to help with product discovery, orders, and site navigation."
+      ],
+      "formal": [
+        "Welcome. I am here to assist with product discovery, order management, and site navigation.",
+        "Good day. I can help you with product search, price comparison, and feature navigation.",
+        "Greetings. How may I assist you with products, orders, or site features today?"
+      ]
+    },
+    "fallback": {
+      "casual": [
+        "I can help with product discovery, pricing, recommendations, and navigation across the site.",
+        "Not quite sure what you're looking for? Try adding product type, budget, or desired style for sharper results.",
+        "I'm here to help! Try being more specific about what you're looking for—product type, price range, or features."
+      ],
+      "formal": [
+        "I apologize for any confusion. Please provide more specific details about your product requirements or desired action.",
+        "To better assist you, please clarify your request with product type, budget constraints, or specific features.",
+        "I can assist with product discovery, pricing analysis, recommendations, and site navigation. Please provide more details."
+      ]
+    }
+  },
+
+  "categoryHints": ["shirt", "dress", "jacket", "shoes", "pants", "accessories"],
+  "colorHints": ["black", "white", "gray", "grey", "blue", "navy", "olive", "brown", "cream", "burgundy", "red", "charcoal"],
+  
+  "colorSynonyms": {
+    "wine red": "Burgundy",
+    "maroon": "Burgundy",
+    "crimson": "Burgundy",
+    "grey": "Gray",
+    "navy": "Navy",
+    "blue": "Blue",
+    "black": "Black",
+    "white": "White",
+    "gray": "Gray",
+    "olive": "Olive",
+    "brown": "Brown",
+    "cream": "Cream",
+    "red": "Burgundy",
+    "charcoal": "Charcoal"
+  },
+
+  "categorySynonyms": {
+    "sneaker": "shoes",
+    "sneakers": "shoes",
+    "shoe": "shoes",
+    "tshirt": "shirt",
+    "t-shirt": "shirt",
+    "tee": "shirt",
+    "tees": "shirt",
+    "trouser": "pants",
+    "trousers": "pants"
+  },
+
+  "stopwords": [
+    "the", "and", "for", "with", "this", "that", "from", "about", 
+    "want", "need", "show", "find", "products", "product", 
+    "please", "hello", "help", "site", "price", "cheap", "expensive"
+  ]
+}
