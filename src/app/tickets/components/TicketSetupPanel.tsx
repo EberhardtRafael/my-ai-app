@@ -102,7 +102,7 @@ export default function TicketSetupPanel({
               disabled={!isConnected}
             />
             <InfoMessage
-              message="Example: sarate/my-ai-app"
+              message="Example: sarate/ai-powered-fullstack-ecommerce-platform"
               variant="muted"
               className="text-xs mt-1"
             />

@@ -1,5 +1,7 @@
 version: '3.8'
 
+name: ai-powered-fullstack-ecommerce-platform
+
 services:
   backend:
     build:

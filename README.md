@@ -377,7 +377,7 @@ This script will:
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd my-ai-app
+cd ai-powered-fullstack-ecommerce-platform
 ```
 
 2. **Install frontend dependencies**

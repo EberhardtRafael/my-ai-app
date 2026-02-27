@@ -352,7 +352,7 @@
     "generateTicketSection": "Generate Ticket",
     "repository": "Repository",
     "repositoryPlaceholder": "username/repo or github.com/username/repo",
-    "repoExample": "Example: sarate/my-ai-app",
+    "repoExample": "Example: sarate/ai-powered-fullstack-ecommerce-platform",
     "taskDescription": "Task Description",
     "taskPlaceholder": "Describe what you want to build...\n\nExample: Add dark mode toggle to the header with system preference detection and localStorage persistence. Should work across all pages with smooth transitions.",
     "contextLabel": "Context",
